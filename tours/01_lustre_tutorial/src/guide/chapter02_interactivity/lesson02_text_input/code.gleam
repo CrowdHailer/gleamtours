@@ -1,4 +1,3 @@
-import gleam/int
 import lustre
 import lustre/attribute as a
 import lustre/element.{text}
