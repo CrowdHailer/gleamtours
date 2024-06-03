@@ -1,0 +1,41 @@
+<p>
+  This “closed loop” of messages and updates works well if all you need is an interactive document.
+  Many applications will also need to talk to the outside world - whether that's fetching data from an API,
+  setting up a WebSocket connection, or even just setting a timer.
+  Let's address the first of these, fetching data.
+</p>
+<p>
+  First we need some data to fetch,
+  and we're going to use an <a href="https://catfact.ninja/">external api</a> to pull in facts about cats.
+</p>
+<p>
+  The "fetch_fact" function does the work of calling the API and extracting the data it needs.
+  Finally it calls dispatch with a message indicating "CatFactFetched" or in the unhappy case "FetchFailed".
+  <em>We'll return to this dispatch function later.</em>
+</p>
+
+<h3>Effects</h3>
+
+<p>
+  Lustre organises this kind of communication with effects. 
+  To use effects an application needs to be constructed using "lustre.application".
+  Previously examples used lustre.simple but we are running full power these days.
+</p>
+
+<p>
+  Now the init and update functions need to return any effects that the app requires.
+  <em>
+    This app has no effects when it starts, so the init function returns `effect.none`.
+  </em>
+</p>
+
+<p>
+  Lustre takes care of wiring up these effects and the state of you application.
+  Any effect functions is invoked with a dispatch function as it's argument.
+  Calling the dispatch function sends messages back to the main application where your update function handles changing the model.
+</p>
+
+<p>
+  There is not much other data to get from this API, so we move on to the final lesson.
+</p>
+<!-- why do we use the elm architectre -->

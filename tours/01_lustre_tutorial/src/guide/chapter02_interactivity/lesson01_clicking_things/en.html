@@ -1,0 +1,45 @@
+<p>
+  So far we have been making inactive pages.
+  Let's step it up a notch and respond to our users actions.
+</p>
+
+<h3>init, update and view</h3>
+
+<p>
+  These three functions specify everything that happens in your app to handle user interactions.
+</p>
+
+<p>
+  The view function returns what the app should look like and it takes a "model" as an argument.
+  The model represents the current state of the program and the view function decides how the user will view the data in the current model.
+</p>
+
+<p>
+  The init function creates the first version of the model. 
+  The update function updates a model in response to some message. 
+</p>
+
+<h3>Events and messages</h3>
+<p>
+  Elements emit events when a user interacts with them. e.g. A user may click a button that would emit a click event.
+  The "on_click" function adds a handler that will dispatch a message when a click event happens.
+  The message is then handled by the update function to change the app state.
+</p>
+
+<p>
+  Events are raw information about what the user did, messages are related to what your app should do.
+  In this example both buttons will emit click events but one will send an Increment message the other a Decrement message.
+</p>
+
+<p>
+  Try adding a new button and message to "Double" the current value. 
+</p>
+
+<h3>Why simple? </h3>
+<p>
+  <em>
+    This app is added to the page using "lustre.simple".
+    This is because the application does not yet interact with the outside world for example with other services.
+    We will get beyond simple apps in the next chapter.
+  </em>
+</p>
