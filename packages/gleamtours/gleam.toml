@@ -1,0 +1,24 @@
+name = "gleamtours"
+version = "1.0.0"
+target = "javascript"
+
+[dependencies]
+conversation = ">= 1.4.3 and < 2.0.0"
+eyg = {path= "../../../eyg-lang/eyg"}
+filepath = ">= 1.0.0 and < 2.0.0"
+gleam_http = ">= 3.6.0 and < 4.0.0"
+gleam_javascript = ">= 0.8.0 and < 1.0.0"
+gleam_json = ">= 1.0.1 and < 2.0.0"
+gleam_stdlib = ">= 0.34.0 and < 2.0.0"
+glen_node = ">= 0.0.1 and < 1.0.0"
+glexer = {path = "../../../glexer"}
+lustre = ">= 4.2.4 and < 5.0.0"
+midas = {path = "../../../mono-2024/midas"}
+netlify = {path = "../../../mono-2024/netlify"}
+plinth = {path= "../../../plinth"}
+simplifile = ">= 1.7.0 and < 2.0.0"
+snag = ">= 0.3.0 and < 1.0.0"
+tour = {path = "../../../language-tour"}
+
+[dev-dependencies]
+gleeunit = ">= 1.0.0 and < 2.0.0"
