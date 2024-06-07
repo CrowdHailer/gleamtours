@@ -1,6 +1,6 @@
 # Gleam Tours
 
-Tours through various topics in Gleam.
+Tours through various topics in Gleam available on https://gleamtours.com/
 
 ## Notes
 
