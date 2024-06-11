@@ -5,7 +5,7 @@ import gleam/dynamic
 import gleam/result
 import gleam/string
 import gleamtours/compiler/prelude.{prelude}
-import midas/task as t
+import midas/js/run as r
 import midas/web/gleam
 import plinth/browser/window
 import snag
@@ -21,8 +21,8 @@ pub type Compiler {
 }
 
 pub fn start(code, deps_src) {
-  use project <- t.await(gleam.new_project() |> t.map_error(snag.new))
-  use deps <- t.await(window.import_(deps_src) |> t.map_error(snag.new))
+  use project <- r.await(gleam.new_project() |> r.map_error(snag.new))
+  use deps <- r.await(window.import_(deps_src) |> r.map_error(snag.new))
   let assert Ok(deps) =
     dynamic.field("default", dynamic.dict(dynamic.string, dynamic.string))(deps)
 
@@ -34,7 +34,7 @@ pub fn start(code, deps_src) {
   let state = Dirty
   let compiler = Compiler(project, code, state)
   let compiler = compile(compiler)
-  t.done(compiler)
+  r.done(compiler)
 }
 
 pub fn code_change(compiler, new) {

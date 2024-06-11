@@ -1,5 +1,4 @@
 import conversation
-import gleam/bit_array
 import gleam/dict.{type Dict}
 import gleam/dynamic
 import gleam/http
@@ -13,10 +12,12 @@ import gleam/json.{type Json}
 import gleam/option.{None, Some}
 import gleam/result
 import gleam/string
-import midas/task as t
+import midas/js/run as r
 import plinth/browser/message
 import plinth/browser/service_worker as sw
 import plinth/javascript/console
+import pojo/http/request as prequest
+import pojo/http/response as presponse
 import snag
 
 // Proxy is facade used by client, could be proxy.Sdk could be in client module i.e. proxy.client
@@ -27,20 +28,6 @@ pub type Proxy {
 pub type SubscriberMessage {
   ForwardRequest(from: Int, project_id: String, file: Request(BitArray))
   Registered(client_id: String)
-}
-
-pub fn json_request(request) {
-  let Request(method, headers, body, scheme, host, port, path, query) = request
-  json.object([
-    #("method", json.string(http.method_to_string(method))),
-    #("headers", json_headers(headers)),
-    #("body", json.string(bit_array.base64_encode(body, False))),
-    #("scheme", json.string(http.scheme_to_string(scheme))),
-    #("host", json.string(host)),
-    #("port", json.nullable(port, json.int)),
-    #("path", json.string(path)),
-    #("query", json.nullable(query, json.string)),
-  ])
 }
 
 fn request_payload(id, project_id, request) {
@@ -55,18 +42,10 @@ fn request_payload(id, project_id, request) {
         // id is ref
         #("id", json.int(id)),
         #("project_id", json.string(project_id)),
-        #("request", json_request(request)),
+        #("request", prequest.to_json(request)),
       ]),
     ),
   ])
-}
-
-fn json_headers(headers) {
-  // encoded as tuples
-  json.array(headers, fn(h) {
-    let #(k, v) = h
-    json.array([k, v], json.string)
-  })
 }
 
 pub fn subscriber_decoder(raw) {
@@ -78,7 +57,7 @@ pub fn subscriber_decoder(raw) {
         ForwardRequest,
         dynamic.field("id", dynamic.int),
         dynamic.field("project_id", dynamic.string),
-        dynamic.field("request", request_decoder),
+        dynamic.field("request", prequest.decoder),
       ),
     ),
   ])(raw)
@@ -86,46 +65,9 @@ pub fn subscriber_decoder(raw) {
   |> snag.context("Failed to decode message " <> string.inspect(raw))
 }
 
-fn header_decoder(raw) {
-  dynamic.list(dynamic.tuple2(dynamic.string, dynamic.string))(raw)
-}
-
-fn body_decoder(raw) {
-  use encoded <- result.try(dynamic.string(raw))
-  bit_array.base64_decode(encoded)
-  |> result.replace_error([dynamic.DecodeError("bitarray", encoded, [])])
-}
-
-pub fn request_decoder(raw) {
-  dynamic.decode8(
-    Request,
-    dynamic.field("method", http.method_from_dynamic),
-    dynamic.field("headers", header_decoder),
-    dynamic.field("body", body_decoder),
-    dynamic.field("scheme", fn(raw) {
-      use str <- result.try(dynamic.string(raw))
-      http.scheme_from_string(str)
-      |> result.replace_error([dynamic.DecodeError("scheme", str, [])])
-    }),
-    dynamic.field("host", dynamic.string),
-    dynamic.field("port", dynamic.optional(dynamic.int)),
-    dynamic.field("path", dynamic.string),
-    dynamic.field("query", dynamic.optional(dynamic.string)),
-  )(raw)
-}
-
 type Message {
   Register
   ForwardedResponse(Int, Result(Response(BitArray), String))
-}
-
-pub fn response_decoder(raw) {
-  dynamic.decode3(
-    Response,
-    dynamic.field("status", dynamic.int),
-    dynamic.field("headers", header_decoder),
-    dynamic.field("body", body_decoder),
-  )(raw)
 }
 
 fn proxy_decoder(raw: Json) {
@@ -137,7 +79,7 @@ fn proxy_decoder(raw: Json) {
         ForwardedResponse,
         dynamic.field("caller", dynamic.int),
         dynamic.any([
-          dynamic.decode1(Ok, dynamic.field("ok", response_decoder)),
+          dynamic.decode1(Ok, dynamic.field("ok", presponse.decoder)),
           dynamic.decode1(Error, dynamic.field("error", dynamic.string)),
         ]),
       ),
@@ -147,17 +89,10 @@ fn proxy_decoder(raw: Json) {
 
 fn response_payload(caller_id, response) {
   let reply = case response {
-    Ok(Response(status, headers, body)) ->
+    Ok(response) ->
       json.object([
         #("caller", json.int(caller_id)),
-        #(
-          "ok",
-          json.object([
-            #("status", json.int(status)),
-            #("headers", json_headers(headers)),
-            #("body", json.string(bit_array.base64_encode(body, False))),
-          ]),
-        ),
+        #("ok", presponse.to_json(response)),
       ])
     Error(reason) -> {
       let debug = snag.pretty_print(reason)
@@ -172,8 +107,8 @@ fn response_payload(caller_id, response) {
 }
 
 pub fn install(on_request) {
-  use _registration <- t.await(
-    sw.register("/proxy.js") |> t.map_error(snag.new),
+  use _registration <- r.await(
+    sw.register("/proxy.js") |> r.map_error(snag.new),
   )
   use registration <- promise.await(sw.ready())
   // should always have active service worker after calling ready.
@@ -212,7 +147,7 @@ pub fn run() -> Promise(Nil) {
 }
 
 fn do_run() {
-  use self <- t.try(check_service_worker())
+  use self <- r.try(check_service_worker())
   let origin = sw.origin(self)
   let ref = js.make_reference(init(self, origin))
   add_fetch_listener(self, fn(event, request) {
@@ -230,7 +165,7 @@ fn do_run() {
   use Nil <- promise.await(sw.do_claim(self))
   use Nil <- promise.await(sw.skip_waiting(self))
   console.log("proxy is running for origin: " <> origin)
-  t.done(Nil)
+  r.done(Nil)
 }
 
 fn check_service_worker() {
@@ -336,9 +271,13 @@ fn handle_fetch(state, event, request) {
             request,
           )
         }
-        _, Error(Nil) -> #(Error(Nil), state)
+        _, Error(Nil) -> {
+          #(Error(Nil), state)
+        }
       }
-    False -> #(Error(Nil), state)
+    False -> {
+      #(Error(Nil), state)
+    }
   }
 }
 

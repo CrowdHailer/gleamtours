@@ -12,10 +12,13 @@ import gleam/string
 import gleamtours/index
 import gleamtours/lesson
 import glen_node
+import midas/js/run as r
+import midas/sdk/netlify
+import midas/shell
 import midas/shell/file_system as fs
 import midas/shell/rollup
 import midas/task as t
-import netlify
+import netlify as netlify_local
 import simplifile
 import snag
 import tour
@@ -24,7 +27,7 @@ const site_id = "3847b531-b17d-438b-b780-e20d91675542"
 
 // This sould be reusable somewhere else
 fn bundle_js(dir, module, func) {
-  use js_dir <- t.try(gleam.build_js(dir))
+  use js_dir <- r.try(gleam.build_js(dir))
 
   let assert Ok(#(package, _)) = string.split_once(module, "/")
   // Assumes that the package and module share name at top level
@@ -33,8 +36,8 @@ fn bundle_js(dir, module, func) {
   rollup.bundle_fn(js_dir, module_path, func)
 }
 
-fn build() {
-  use project <- t.try(fs.current_directory())
+fn build(netlify_app) {
+  use project <- r.try(fs.current_directory())
 
   let tour_styles = [
     "/common.css", "/css/fonts.css", "/css/theme.css", "/css/layout.css",
@@ -45,7 +48,7 @@ fn build() {
   let tour_static_dir =
     string.replace(project, "/mono-2024/ctrl", "/language-tour/static")
   // needs to be a t.try_promise_map for proper use of t inside
-  use static <- t.try(
+  use static <- r.try(
     list.try_map(tour_styles, fn(path) {
       let full_path = string.append(tour_static_dir, path)
       case fs.read(full_path) {
@@ -58,10 +61,10 @@ fn build() {
   // index.js name is used by the lesson template
   let module = "gleamtours/lesson"
   let func = "app"
-  use index_js <- t.await(bundle_js(project, module, func))
+  use index_js <- r.await(bundle_js(project, module, func))
   let index_js = bit_array.from_string(index_js)
 
-  use compiler_assets <- t.try(fs.read_directory_content(
+  use compiler_assets <- r.try(fs.read_directory_content(
     "priv/vendor/wasm-compiler",
   ))
 
@@ -73,14 +76,14 @@ fn build() {
 
   let module = "gleamtours/sandbox/proxy"
   let func = "run"
-  use proxy_js <- t.await(bundle_js(project, module, func))
+  use proxy_js <- r.await(bundle_js(project, module, func))
   let proxy_js = bit_array.from_string(proxy_js)
 
   let tours_dir =
     string.replace(project, "/mono-2024/ctrl", "/gleamtours/tours")
-  use filenames <- t.try(tour.load_directory_names(tours_dir))
+  use filenames <- r.try(tour.load_directory_names(tours_dir))
 
-  use tours <- t.try(
+  use tours <- r.try(
     list.try_map(filenames, fn(filenames) {
       let tour.FileNames(path, name, slug) = filenames
       let src_path = filepath.join(path, "src/guide")
@@ -141,16 +144,19 @@ fn build() {
 
       let src_dir = filepath.join(path, "src")
       use src <- result.try(
-        fs.read_directory(src_dir)
+        fs.get_files(src_dir)
         |> snag.context("Could not read src for " <> name),
       )
-      let src = list.filter(src, fn(s) { s != "guide" })
+      let guide_dir = filepath.join(src_dir, "guide")
+      let src =
+        list.filter(src, fn(path) { !string.starts_with(path, guide_dir) })
 
       let src_files =
-        list.map(src, fn(s) {
-          let src = filepath.join(src_dir, s)
+        list.map(src, fn(src) {
+          let assert Ok(#("", "/" <> relative)) =
+            string.split_once(src, src_dir)
           let assert Ok(module) = simplifile.read(src)
-          #(s, module)
+          #(relative, module)
         })
       let files = list.append(files, src_files)
 
@@ -179,9 +185,30 @@ fn build() {
 
   let index = bit_array.from_string(index.view(tours))
 
+  let auth_page =
+    bit_array.from_string(
+      "
+<script>
+  const channel = new BroadcastChannel('auth')
+  channel.postMessage({service: 'twitter', redirect: window.location.href})
+</script>
+",
+    )
+  let netlify_auth_page =
+    bit_array.from_string(
+      "
+<script>
+  const channel = new BroadcastChannel('auth')
+  channel.postMessage({service: 'netlify', redirect: window.location.href})
+</script>
+",
+    )
   let pages =
     list.concat([
       [
+        #("/_redirects", bit_array.from_string(redirects)),
+        #("/auth/twitter/index.html", auth_page),
+        #("/auth/netlify/index.html", netlify_auth_page),
         #("/index.html", index),
         #("/proxy.js", proxy_js),
         #("/index.js", index_js),
@@ -190,7 +217,7 @@ fn build() {
       pages,
       compiler_assets,
     ])
-  t.done(pages)
+  r.done(pages)
 }
 
 fn generate_deps_bundle(files) {
@@ -214,24 +241,33 @@ fn generate_deps_bundle(files) {
 }
 
 // public preview and deploy fn
+const redirects = "/proxy/* https://:splat 200
+"
 
-pub fn preview() {
-  let work = t.map_error(build(), snag.layer(_, "Build failed"))
-  use files <- t.await(work)
+pub fn preview(local_app) {
+  let work = r.map_error(build(local_app), snag.layer(_, "Build failed"))
+  use files <- r.await(work)
   io.debug("serving")
-  let Nil = glen_node.serve(8080, netlify.dev(files))
-  t.done(Nil)
+  let Nil = glen_node.serve(8080, netlify_local.dev(files))
+  r.done(Nil)
 }
 
+fn do_deploy(app, site_id, content) {
+  use token <- t.do(netlify.authenticate(app))
+  netlify.deploy_site(token, site_id, content)
+}
+
+pub const ctrl_prod_app = netlify.App(
+  "-YQebIC-PkC4ANX-5OC_qdO3cW9x8RAVoEzzqL6Ssu8",
+  "https://gleamtours.com/auth/netlify",
+)
+
 pub fn deploy(app) {
-  let work = t.map_error(build(), snag.layer(_, "Build failed"))
-  use content <- t.await(work)
-  use token <- t.await(netlify.authenticate(app) |> t.map_error(snag.new))
-  use response <- t.await(
-    netlify.deploy_site(token, site_id, content) |> t.map_error(snag.new),
-  )
+  let work = r.map_error(build(ctrl_prod_app), snag.layer(_, "Build failed"))
+  use content <- r.await(work)
+  use response <- r.await(shell.run(do_deploy(app, site_id, content)))
   io.debug(response)
-  t.done(Nil)
+  r.done(Nil)
 }
 // pub fn run(args) {
 //   case args {

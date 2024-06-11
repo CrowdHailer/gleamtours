@@ -1,11 +1,14 @@
 import gleam/bit_array
-import gleam/dynamic
-import gleam/http/request.{type Request}
+import gleam/dynamic.{type Dynamic}
+import gleam/fetch
+import gleam/http
+import gleam/http/request.{type Request, Request}
 import gleam/http/response
 import gleam/io
 import gleam/javascript as js
 import gleam/javascript/promise
 import gleam/javascript/promisex
+import gleam/json
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/string
@@ -21,12 +24,20 @@ import lustre/element/html as h
 import lustre/event
 import midas/web/gleam
 import platforms/browser/windows
+import plinth/browser/broadcast_channel
 import plinth/browser/document
 import plinth/browser/element
+import plinth/browser/message
 import plinth/browser/window.{type Window}
+import plinth/javascript/console
 import plinth/javascript/global
+import pojo/http/request as prequest
+import pojo/http/response as presponse
+import pojo/http/utils
+import pojo/result as presult
 import snag.{type Result}
 import tour
+import zip_js
 
 pub fn page(lesson) {
   tour.lesson_page_render(lesson)
@@ -35,6 +46,7 @@ pub fn page(lesson) {
 fn environment() {
   case uri.parse(window.location()) {
     Ok(Uri(path: "/webserver" <> _, ..)) -> WebServer
+    Ok(Uri(path: "/deploy" <> _, ..)) -> Task
     _ -> WebApp
   }
 }
@@ -87,6 +99,7 @@ pub type Remote(resource) {
 pub type Environment {
   WebServer
   WebApp
+  Task
 }
 
 pub type App {
@@ -97,6 +110,7 @@ pub type App {
     proxy: Proxy,
     opened: Option(Window),
     environment: Environment,
+    run: Option(List(String)),
   )
 }
 
@@ -108,22 +122,22 @@ pub type Message {
   ChooseEnvironment(Environment)
   CodeChange(String)
   Timeout
-  // This automatically executes in a popup
   Execute
-  // Open separate toggle fn
+  RunLog(String)
+  RunDone(String)
 }
 
 fn handle_as_webserver(compiler, client_id, project_id, request) {
   case project_id {
     "0" -> {
       // Needs to be HTML only this gets rather circular so running needs to not end up here
-      let request = dynamic.from(proxy.json_request(request))
+      let request = dynamic.from(prequest.to_json(request))
       let work =
         gleam.run_with_client(client_id, "1", "wrap__", "handle", request)
       use r <- promise.map(work)
       case r {
         Ok(value) -> {
-          let decoded = proxy.response_decoder(value)
+          let decoded = presponse.decoder(value)
           case decoded {
             Ok(response) -> {
               response
@@ -234,11 +248,37 @@ fn handle_as_webapp(compiler, project_id, path) {
   }
 }
 
+fn handle_as_script(compiler, project_id, request) {
+  case project_id {
+    "1" -> {
+      let request.Request(path: path, ..) = request
+      case compiler.read_output(compiler, path) {
+        Ok(code) -> {
+          response.new(200)
+          |> response.prepend_header("content-type", "text/javascript")
+          |> response.set_body(bit_array.from_string(code))
+          |> response.prepend_header("cache-control", "no-cache")
+        }
+        Error(reason) -> {
+          response.new(404)
+          |> response.set_body(bit_array.from_string(string.inspect(reason)))
+          |> response.prepend_header("cache-control", "no-cache")
+        }
+      }
+      |> promise.resolve()
+    }
+    _ -> panic as "only 0 is valid project it"
+  }
+}
+
 pub fn update(app, message) {
   case app, message {
     Preparing(proxy: Loaded(proxy), ..), CompilerLoaded(Ok(compiler), dbounce)
     | Preparing(compiler: Loaded(compiler), ..), ProxyLoaded(Ok(proxy), dbounce)
-    -> #(App(compiler, dbounce, proxy, None, environment()), effect.none())
+    -> #(
+      App(compiler, dbounce, proxy, None, environment(), None),
+      effect.none(),
+    )
     Preparing(code: code, proxy: proxy, ..), CompilerLoaded(Ok(compiler), _) -> {
       let state = Preparing(code, Loaded(compiler), proxy)
       #(state, effect.none())
@@ -260,7 +300,7 @@ pub fn update(app, message) {
     }
 
     // -------------------
-    App(compiler, _debouncer, proxy, _opened, environment),
+    App(compiler, _debouncer, proxy, _opened, environment, _run),
       ProxiedRequest(caller_id, project_id, request)
     -> #(
       app,
@@ -271,55 +311,74 @@ pub fn update(app, message) {
           WebServer ->
             handle_as_webserver(compiler, proxy.client_id, project_id, request)
           WebApp -> handle_as_webapp(compiler, project_id, request.path)
+          Task -> handle_as_script(compiler, project_id, request)
         })
         proxy.send_response(service_worker, caller_id, Ok(response))
       }),
     )
 
-    App(compiler, debouncer, proxy, opened, _old), ChooseEnvironment(new) -> {
-      #(App(compiler, debouncer, proxy, opened, new), effect.none())
+    App(compiler, debouncer, proxy, opened, _old, run), ChooseEnvironment(new) -> {
+      #(App(compiler, debouncer, proxy, opened, new, run), effect.none())
     }
-    App(compiler, debouncer, proxy, opened, environment), CodeChange(new) -> {
+    App(compiler, debouncer, proxy, opened, environment, run), CodeChange(new) -> {
       let compiler = compiler.code_change(compiler, new)
       #(
-        App(compiler, debouncer, proxy, opened, environment),
+        App(compiler, debouncer, proxy, opened, environment, run),
         effect.from(fn(_dispatch) { debouncer() }),
       )
     }
-    App(compiler, debouncer, proxy, opened, environment), Timeout -> {
+    App(compiler, debouncer, proxy, opened, environment, run), Timeout -> {
       let compiler = compiler.compile(compiler)
-      #(App(compiler, debouncer, proxy, opened, environment), effect.none())
+      #(
+        App(compiler, debouncer, proxy, opened, environment, run),
+        effect.none(),
+      )
     }
-    App(compiler, debouncer, proxy, opened, environment), Execute -> {
-      let path = case environment {
-        WebServer -> "/sandbox/server/" <> proxy.client_id <> "/0"
-        WebApp -> proxy.spa_path(proxy)
-      }
-
-      let app = case opened {
-        None -> {
-          let assert Ok(sandbox) = windows.open(path, #(800, 800))
-          // state overrides to compiled to close iframe
-          let compiler = Compiler(..compiler, state: compiler.Compiled([]))
-          App(compiler, debouncer, proxy, Some(sandbox), environment)
+    App(compiler, debouncer, proxy, opened, environment, run), Execute -> {
+      let open = open_sandbox(
+        _,
+        compiler,
+        debouncer,
+        proxy,
+        opened,
+        environment,
+        run,
+      )
+      case environment {
+        WebServer -> open("/sandbox/server/" <> proxy.client_id <> "/0")
+        WebApp -> open(proxy.spa_path(proxy))
+        Task -> {
+          let app =
+            App(compiler, debouncer, proxy, opened, environment, Some([]))
+          #(
+            app,
+            effect.from(fn(dispatch) {
+              let work =
+                gleam.run_with_client(
+                  proxy.client_id,
+                  "1",
+                  "wrap__",
+                  "run",
+                  dynamic.from(json.string("s")),
+                )
+              promise.map(work, fn(x) {
+                let assert Ok(return) = x
+                run_script(return, dispatch)
+              })
+              Nil
+            }),
+          )
         }
-        Some(sandbox) -> {
-          case window.closed(sandbox) {
-            True -> {
-              let assert Ok(sandbox) = windows.open(path, #(800, 800))
-              // state overrides to compiled to close iframe
-              let compiler = Compiler(..compiler, state: compiler.Compiled([]))
-              App(compiler, debouncer, proxy, Some(sandbox), environment)
-            }
-            False -> {
-              window.set_location(sandbox, path)
-              // window.reload_of(sandbox)
-              window.focus(sandbox)
-              app
-            }
-          }
-        }
       }
+    }
+    App(compiler, debouncer, proxy, opened, environment, run), RunDone(message)
+    | App(compiler, debouncer, proxy, opened, environment, run), RunLog(message)
+    -> {
+      let run = case run {
+        None -> Some([message])
+        Some(messages) -> Some([message, ..messages])
+      }
+      let app = App(compiler, debouncer, proxy, opened, environment, run)
       #(app, effect.none())
     }
     _, _ -> {
@@ -327,6 +386,144 @@ pub fn update(app, message) {
       #(app, effect.none())
     }
   }
+}
+
+fn run_script(return, dispatch) {
+  io.debug(return)
+  let assert Ok(Serialized(label, payload, then)) =
+    dynamic.decode3(
+      Serialized,
+      dynamic.field("0", dynamic.string),
+      dynamic.field("1", is_ok),
+      dynamic.field("2", is_ok),
+    )(return)
+
+  case label {
+    "Follow" -> {
+      let assert Ok(path) = dynamic.string(dynamic.from(payload))
+      // let assert Ok(popup) = browser.open(path)
+      let assert Ok(popup) = windows.open(path, #(600, 700))
+      use redirect <- promise.await(
+        promise.new(fn(resolve) {
+          let assert Ok(channel) = broadcast_channel.new("auth")
+          broadcast_channel.on_message(channel, fn(message) {
+            dynamic.field("redirect", dynamic.string)(
+              dynamic.from(message.data(message)),
+            )
+            |> resolve()
+          })
+        }),
+      )
+      window.close(popup)
+      let assert Ok(redirect) = redirect
+      let next = then(dynamic.from(redirect))
+      run_script(dynamic.from(next), dispatch)
+    }
+    "Fetch" -> {
+      let assert Ok(request) = prequest.decoder(dynamic.from(payload))
+      let assert "https://" <> rest = uri.to_string(request.to_uri(request))
+      let location = window.location()
+      io.debug(location)
+      io.debug("-----")
+      let #(scheme, host) = case location {
+        "https://gleamtours.com" <> _ -> #(http.Https, "gleamtours.com")
+        "http://localhost:8080" <> _ -> #(http.Http, "localhost:8080")
+        _ -> panic as { "unexpected location: " <> location }
+      }
+      let request =
+        Request(
+          ..request,
+          scheme: scheme,
+          host: host,
+          port: None,
+          query: None,
+          path: "/proxy/" <> rest,
+        )
+
+      use response <- promise.await(fetch.send_bits(request))
+      use response <- promise.await(case response {
+        Ok(response) -> fetch.read_bytes_body(response)
+        Error(reason) -> promise.resolve(Error(reason))
+      })
+      let response =
+        presult.to_json(presponse.to_json, fn(reason) {
+          json.string(string.inspect(reason))
+        })(response)
+      let next = then(dynamic.from(response))
+      run_script(dynamic.from(next), dispatch)
+    }
+    "Log" -> {
+      let assert Ok(message) = dynamic.string(dynamic.from(payload))
+      dispatch(RunLog(message))
+      let next = then(dynamic.from(Nil))
+      run_script(dynamic.from(next), dispatch)
+    }
+    "Zip" -> {
+      let assert Ok(files) =
+        dynamic.list(dynamic.decode2(
+          fn(a, b) { #(a, b) },
+          dynamic.field("name", dynamic.string),
+          dynamic.field("content", utils.body_decoder),
+        ))(dynamic.from(payload))
+      use zipped <- promise.await(zip_js.zip(files))
+      let zipped = utils.body_to_json(zipped)
+      let next = then(dynamic.from(zipped))
+      run_script(dynamic.from(next), dispatch)
+    }
+    "Done" -> {
+      let final = case dynamic.string(dynamic.from(payload)) {
+        Ok(final) -> final
+        Error(_) -> string.inspect(payload)
+      }
+      dispatch(RunDone(final))
+      promise.resolve(Ok(payload))
+    }
+    "Abort" -> {
+      io.println("Aborted ----")
+      io.debug(payload)
+      promise.resolve(Error(Nil))
+    }
+    _ -> {
+      io.debug(#(label, payload))
+      panic as "wat"
+    }
+  }
+}
+
+fn is_ok(v) {
+  Ok(dynamic.unsafe_coerce(v))
+}
+
+pub type Serialized {
+  Serialized(String, json.Json, fn(Dynamic) -> Serialized)
+}
+
+fn open_sandbox(path, compiler, debouncer, proxy, opened, environment, run) {
+  let app = case opened {
+    None -> {
+      let assert Ok(sandbox) = windows.open(path, #(800, 800))
+      // state overrides to compiled to close iframe
+      let compiler = Compiler(..compiler, state: compiler.Compiled([]))
+      App(compiler, debouncer, proxy, Some(sandbox), environment, run)
+    }
+    Some(sandbox) -> {
+      case window.closed(sandbox) {
+        True -> {
+          let assert Ok(sandbox) = windows.open(path, #(800, 800))
+          // state overrides to compiled to close iframe
+          let compiler = Compiler(..compiler, state: compiler.Compiled([]))
+          App(compiler, debouncer, proxy, Some(sandbox), environment, run)
+        }
+        False -> {
+          window.set_location(sandbox, path)
+          // window.reload_of(sandbox)
+          window.focus(sandbox)
+          App(compiler, debouncer, proxy, opened, environment, run)
+        }
+      }
+    }
+  }
+  #(app, effect.none())
 }
 
 fn resource(resource) {
@@ -346,19 +543,25 @@ pub fn view(app) {
         h.div([], [text("proxy "), resource(proxy)]),
       ]),
     ]
-    App(compiler, _debounce, ..) -> {
+    App(compiler: compiler, run: run, ..) -> {
       let Compiler(code: code, state: state, ..) = compiler
       [
         h.section([a.id("editor")], [editor(code, CodeChange)]),
-        h.aside([a.id("output")], case state {
-          compiler.Compiled(warnings) ->
+        h.aside([a.id("output")], case run, state {
+          Some(items), _ -> [
+            h.pre(
+              [],
+              list.map(list.reverse(items), fn(item) { h.p([], [text(item)]) }),
+            ),
+          ]
+          None, compiler.Compiled(warnings) ->
             list.map(warnings, fn(warning) {
               h.pre([a.class("warning")], [text(warning)])
             })
-          compiler.Errored(reason) -> [
+          None, compiler.Errored(reason) -> [
             h.pre([a.class("error")], [text(reason)]),
           ]
-          compiler.Dirty -> []
+          None, compiler.Dirty -> []
         }),
       ]
     }

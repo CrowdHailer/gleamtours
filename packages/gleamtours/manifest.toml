@@ -24,9 +24,11 @@ packages = [
   { name = "htmb", version = "2.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "htmb", source = "hex", outer_checksum = "915186FE1759EB8B78CBDC01228D0B7ED74DA2E64B08B4115525E293B036C428" },
   { name = "lustre", version = "4.2.4", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_json", "gleam_otp", "gleam_stdlib"], otp_app = "lustre", source = "hex", outer_checksum = "09B94E1380CBC400DCD594B36A845E5CB2E143DF89E95460B2CA59E44499CAC9" },
   { name = "marceau", version = "1.2.0", build_tools = ["gleam"], requirements = [], otp_app = "marceau", source = "hex", outer_checksum = "5188D643C181EE350D8A20A3BDBD63AF7B6C505DE333CFBE05EF642ADD88A59B" },
-  { name = "midas", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_fetch", "gleam_javascript", "gleam_json", "gleam_package_interface", "gleam_stdlib", "plinth", "shellout", "simplifile", "snag"], source = "local", path = "../../../mono-2024/midas" },
-  { name = "netlify", version = "1.0.0", build_tools = ["gleam"], requirements = ["filepath", "gleam_fetch", "gleam_http", "gleam_javascript", "gleam_stdlib", "glen", "marceau", "midas", "zip_js"], source = "local", path = "../../../mono-2024/netlify" },
-  { name = "plinth", version = "0.4.1", build_tools = ["gleam"], requirements = ["conversation", "gleam_javascript", "gleam_json", "gleam_stdlib"], source = "local", path = "../../../plinth" },
+  { name = "midas", version = "0.4.0", build_tools = ["gleam"], requirements = ["gleam_http", "gleam_json", "gleam_stdlib", "snag"], otp_app = "midas", source = "hex", outer_checksum = "0A1C83EC4B5DC77366B655D81179E4F78B67BFCA8EFBB8651F817B0738775969" },
+  { name = "midas_run", version = "1.0.0", build_tools = ["gleam"], requirements = ["eyg", "gleam_fetch", "gleam_javascript", "gleam_json", "gleam_package_interface", "gleam_stdlib", "plinth", "shellout", "simplifile", "snag"], source = "local", path = "../../../mono-2024/midas_run" },
+  { name = "netlify", version = "1.0.0", build_tools = ["gleam"], requirements = ["conversation", "filepath", "gleam_fetch", "gleam_http", "gleam_javascript", "gleam_stdlib", "glen", "marceau", "zip_js"], source = "local", path = "../../../mono-2024/netlify" },
+  { name = "plinth", version = "0.4.4", build_tools = ["gleam"], requirements = ["conversation", "gleam_javascript", "gleam_json", "gleam_stdlib"], source = "local", path = "../../../plinth" },
+  { name = "pojo", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_http", "gleam_json", "gleam_stdlib"], otp_app = "pojo", source = "hex", outer_checksum = "3623083F3417A70A8E5D66DF1749B60E18586D8E44379883AF863C6BD02FEE3D" },
   { name = "shellout", version = "1.6.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "shellout", source = "hex", outer_checksum = "E2FCD18957F0E9F67E1F497FC9FF57393392F8A9BAEAEA4779541DE7A68DD7E0" },
   { name = "simplifile", version = "1.7.0", build_tools = ["gleam"], requirements = ["filepath", "gleam_stdlib"], otp_app = "simplifile", source = "hex", outer_checksum = "1D5DFA3A2F9319EC85825F6ED88B8E449F381B0D55A62F5E61424E748E7DDEB0" },
   { name = "snag", version = "0.3.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "snag", source = "hex", outer_checksum = "54D32E16E33655346AA3E66CBA7E191DE0A8793D2C05284E3EFB90AD2CE92BCC" },
@@ -36,20 +38,22 @@ packages = [
 ]
 
 [requirements]
-conversation = { version = ">= 1.4.3 and < 2.0.0"}
+conversation = { version = ">= 1.4.3 and < 2.0.0" }
 eyg = { path = "../../../eyg-lang/eyg" }
 filepath = { version = ">= 1.0.0 and < 2.0.0" }
 gleam_http = { version = ">= 3.6.0 and < 4.0.0" }
 gleam_javascript = { version = ">= 0.8.0 and < 1.0.0" }
-gleam_json = { version = ">= 1.0.1 and < 2.0.0" }
+gleam_json = { version = ">= 1.0.0 and < 3.0.0" }
 gleam_stdlib = { version = ">= 0.34.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
 glen_node = { version = ">= 0.0.1 and < 1.0.0" }
 glexer = { path = "../../../glexer" }
 lustre = { version = ">= 4.2.4 and < 5.0.0" }
-midas = { path = "../../../mono-2024/midas" }
+midas = { version = ">= 0.4.0 and < 1.0.0"}
+midas_run = { path = "../../../mono-2024/midas_run" }
 netlify = { path = "../../../mono-2024/netlify" }
 plinth = { path = "../../../plinth" }
+pojo = { version = ">= 1.0.1 and < 2.0.0" }
 simplifile = { version = ">= 1.7.0 and < 2.0.0" }
 snag = { version = ">= 0.3.0 and < 1.0.0" }
 tour = { path = "../../../language-tour" }
