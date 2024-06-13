@@ -18,6 +18,20 @@ pub type Serialized {
 
 pub fn serialize(eff) {
   case eff {
+    t.Bundle(module, function, then) ->
+      Serialized(
+        "Bundle",
+        json.object([
+          #("module", json.string(module)),
+          #("function", json.string(function)),
+        ]),
+        fn(value) {
+          let assert Ok(result) =
+            result.decoder(dynamic.string, dynamic.string)(value)
+          serialize(then(result))
+        },
+      )
+
     t.Follow(url, then) ->
       Serialized("Follow", json.string(url), fn(value) {
         let assert Ok(url) = dynamic.string(value)

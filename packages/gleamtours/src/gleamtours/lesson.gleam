@@ -1,3 +1,4 @@
+import filepath
 import gleam/bit_array
 import gleam/dynamic.{type Dynamic}
 import gleam/fetch
@@ -23,6 +24,7 @@ import lustre/element.{text} as _
 import lustre/element/html as h
 import lustre/event
 import midas/web/gleam
+import midas/web/rollup
 import platforms/browser/windows
 import plinth/browser/broadcast_channel
 import plinth/browser/document
@@ -45,7 +47,7 @@ pub fn page(lesson) {
 
 fn environment() {
   case uri.parse(window.location()) {
-    Ok(Uri(path: "/webserver" <> _, ..)) -> WebServer
+    Ok(Uri(path: "/building-a-webserver" <> _, ..)) -> WebServer
     Ok(Uri(path: "/deploy" <> _, ..)) -> Task
     _ -> WebApp
   }
@@ -363,7 +365,7 @@ pub fn update(app, message) {
                 )
               promise.map(work, fn(x) {
                 let assert Ok(return) = x
-                run_script(return, dispatch)
+                run_script(compiler, return, dispatch)
               })
               Nil
             }),
@@ -388,7 +390,7 @@ pub fn update(app, message) {
   }
 }
 
-fn run_script(return, dispatch) {
+fn run_script(compiler, return, dispatch) {
   io.debug(return)
   let assert Ok(Serialized(label, payload, then)) =
     dynamic.decode3(
@@ -399,6 +401,36 @@ fn run_script(return, dispatch) {
     )(return)
 
   case label {
+    "Bundle" -> {
+      let decoder =
+        dynamic.decode2(
+          fn(a, b) { #(a, b) },
+          dynamic.field("module", dynamic.string),
+          dynamic.field("function", dynamic.string),
+        )
+      let assert Ok(#(module, function)) = decoder(dynamic.from(payload))
+      use out <- promise.await(
+        rollup.bundle(
+          module,
+          function,
+          fn(source, importer) {
+            let assert Ok(source) =
+              filepath.expand(filepath.join(
+                filepath.directory_name(importer),
+                source,
+              ))
+            source
+          },
+          fn(module) {
+            let assert Ok(content) = compiler.read_output(compiler, module)
+            content
+          },
+        ),
+      )
+      let next =
+        then(dynamic.from(presult.to_json(json.string, json.string)(out)))
+      run_script(compiler, dynamic.from(next), dispatch)
+    }
     "Follow" -> {
       let assert Ok(path) = dynamic.string(dynamic.from(payload))
       // let assert Ok(popup) = browser.open(path)
@@ -417,7 +449,7 @@ fn run_script(return, dispatch) {
       window.close(popup)
       let assert Ok(redirect) = redirect
       let next = then(dynamic.from(redirect))
-      run_script(dynamic.from(next), dispatch)
+      run_script(compiler, dynamic.from(next), dispatch)
     }
     "Fetch" -> {
       let assert Ok(request) = prequest.decoder(dynamic.from(payload))
@@ -450,13 +482,13 @@ fn run_script(return, dispatch) {
           json.string(string.inspect(reason))
         })(response)
       let next = then(dynamic.from(response))
-      run_script(dynamic.from(next), dispatch)
+      run_script(compiler, dynamic.from(next), dispatch)
     }
     "Log" -> {
       let assert Ok(message) = dynamic.string(dynamic.from(payload))
       dispatch(RunLog(message))
       let next = then(dynamic.from(Nil))
-      run_script(dynamic.from(next), dispatch)
+      run_script(compiler, dynamic.from(next), dispatch)
     }
     "Zip" -> {
       let assert Ok(files) =
@@ -468,7 +500,7 @@ fn run_script(return, dispatch) {
       use zipped <- promise.await(zip_js.zip(files))
       let zipped = utils.body_to_json(zipped)
       let next = then(dynamic.from(zipped))
-      run_script(dynamic.from(next), dispatch)
+      run_script(compiler, dynamic.from(next), dispatch)
     }
     "Done" -> {
       let final = case dynamic.string(dynamic.from(payload)) {
@@ -479,8 +511,11 @@ fn run_script(return, dispatch) {
       promise.resolve(Ok(payload))
     }
     "Abort" -> {
-      io.println("Aborted ----")
-      io.debug(payload)
+      let final = case dynamic.string(dynamic.from(payload)) {
+        Ok(final) -> final
+        Error(_) -> string.inspect(payload)
+      }
+      dispatch(RunDone("ERROR: " <> final))
       promise.resolve(Error(Nil))
     }
     _ -> {

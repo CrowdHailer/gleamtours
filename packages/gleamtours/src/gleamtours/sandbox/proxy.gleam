@@ -211,8 +211,8 @@ fn handle_fetch(state, event, request) {
 
   let controlled =
     result.or(
-      dict.get(captured, sw.resulting_client_id(event) |> io.debug),
-      dict.get(captured, sw.client_id(event) |> io.debug),
+      dict.get(captured, sw.resulting_client_id(event)),
+      dict.get(captured, sw.client_id(event)),
     )
   let Request(scheme: scheme, host: host, port: port, ..) = request
   let origin = case scheme, host, port {
@@ -373,6 +373,7 @@ fn add_fetch_listener(self, handler) {
     let request =
       sw.request(event)
       |> conversation.translate_request()
+
     case handler(event, request) {
       Ok(p) -> {
         let p =

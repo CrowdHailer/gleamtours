@@ -174,7 +174,7 @@ fn build(netlify_app) {
           |> string.replace("Gleam Language Tour", tour_name)
           |> string.replace(
             "</head>",
-            "<script defer data-domain=\"gleamtours.com\" src=\"https://plausible.io/js/script.js\"></script></head>",
+            "<script src=\"https://unpkg.com/@rollup/browser/dist/rollup.browser.js\"></script><script defer data-domain=\"gleamtours.com\" src=\"https://plausible.io/js/script.js\"></script></head>",
           )
           |> string.replace("table-of-contents", slug)
           |> bit_array.from_string()
