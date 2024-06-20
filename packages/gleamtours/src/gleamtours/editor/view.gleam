@@ -80,6 +80,7 @@ pub fn render(code, on_update) {
             let target =
               event.target(dynamic.unsafe_coerce(dynamic.from(event)))
             window.request_animation_frame(fn(_) {
+              let target = dynamic.unsafe_coerce(target)
               let scroll_top = element.scroll_top(target)
               let scroll_left = element.scroll_left(target)
               let assert Ok(pre) = document.query_selector("#" <> pre_id)

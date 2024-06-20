@@ -1,7 +1,3 @@
-import midas/shell/gleam
-
-// import ctrl/sdk/netlify as c_netlify
-// import ctrl/website/website
 import filepath
 import gleam/bit_array
 import gleam/io
@@ -16,6 +12,7 @@ import midas/js/run as r
 import midas/sdk/netlify
 import midas/shell
 import midas/shell/file_system as fs
+import midas/shell/gleam
 import midas/shell/rollup
 import midas/task as t
 import netlify as netlify_local
