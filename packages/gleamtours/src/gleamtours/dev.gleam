@@ -259,10 +259,10 @@ pub const ctrl_prod_app = netlify.App(
   "https://gleamtours.com/auth/netlify",
 )
 
-pub fn deploy(app) {
+pub fn deploy(app, root) {
   let work = r.map_error(build(ctrl_prod_app), snag.layer(_, "Build failed"))
   use content <- r.await(work)
-  use response <- r.await(shell.run(do_deploy(app, site_id, content)))
+  use response <- r.await(shell.run(do_deploy(app, site_id, content), root))
   io.debug(response)
   r.done(Nil)
 }
