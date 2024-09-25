@@ -1,6 +1,7 @@
 import filepath
 import gleam/bit_array
 import gleam/dynamic.{type Dynamic}
+import gleam/dynamicx
 import gleam/fetch
 import gleam/http
 import gleam/http/request.{type Request, Request}
@@ -526,7 +527,7 @@ fn run_script(compiler, return, dispatch) {
 }
 
 fn is_ok(v) {
-  Ok(dynamic.unsafe_coerce(v))
+  Ok(dynamicx.unsafe_coerce(v))
 }
 
 pub type Serialized {

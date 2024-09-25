@@ -1,5 +1,6 @@
 import gleam/bit_array
 import gleam/dynamic.{type Dynamic}
+import gleam/dynamicx
 import gleam/io
 import gleam/json
 import gleam/uri
@@ -68,7 +69,7 @@ pub fn serialize(eff) {
         },
       )
     t.Done(value) ->
-      Serialized("Done", dynamic.unsafe_coerce(dynamic.from(value)), fn(_) {
+      Serialized("Done", dynamicx.unsafe_coerce(dynamic.from(value)), fn(_) {
         panic as "should not have continued"
       })
     t.Abort(reason) ->

@@ -245,7 +245,7 @@ pub fn preview(local_app) {
   let work = r.map_error(build(local_app), snag.layer(_, "Build failed"))
   use files <- r.await(work)
   io.debug("serving")
-  let Nil = glen_node.serve(8080, netlify_local.dev(files))
+  let assert Ok(_) = glen_node.serve(8080, netlify_local.dev(files))
   r.done(Nil)
 }
 

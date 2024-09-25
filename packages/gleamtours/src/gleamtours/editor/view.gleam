@@ -77,10 +77,10 @@ pub fn render(code, on_update) {
             Error([])
           }),
           e.on("scroll", fn(event) {
-            let target =
-              event.target(dynamic.unsafe_coerce(dynamic.from(event)))
+            let assert Ok(event) = event.cast(event)
+            let target = event.target(event)
             window.request_animation_frame(fn(_) {
-              let target = dynamic.unsafe_coerce(target)
+              let assert Ok(target) = element.cast(target)
               let scroll_top = element.scroll_top(target)
               let scroll_left = element.scroll_left(target)
               let assert Ok(pre) = document.query_selector("#" <> pre_id)
