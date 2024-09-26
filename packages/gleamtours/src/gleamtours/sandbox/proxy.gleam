@@ -6,12 +6,12 @@ import gleam/http/request.{type Request, Request}
 import gleam/http/response.{type Response, Response}
 import gleam/int
 import gleam/io
-import gleam/javascript as js
 import gleam/javascript/promise.{type Promise}
 import gleam/json.{type Json}
 import gleam/option.{None, Some}
 import gleam/result
 import gleam/string
+import javascript/mutable_reference as ref
 import midas/js/run as r
 import plinth/browser/message
 import plinth/browser/service_worker as sw
@@ -149,16 +149,16 @@ pub fn run() -> Promise(Nil) {
 fn do_run() {
   use self <- r.try(check_service_worker())
   let origin = sw.origin(self)
-  let ref = js.make_reference(init(self, origin))
+  let ref = ref.new(init(self, origin))
   add_fetch_listener(self, fn(event, request) {
-    let #(p, state) = handle_fetch(js.dereference(ref), event, request)
-    js.set_reference(ref, state)
+    let #(p, state) = handle_fetch(ref.get(ref), event, request)
+    ref.set(ref, state)
     p
   })
 
   sw.self_on_message(self, fn(message) {
-    let state = handle_message(js.dereference(ref), message)
-    js.set_reference(ref, state)
+    let state = handle_message(ref.get(ref), message)
+    ref.set(ref, state)
     Nil
   })
 
@@ -301,14 +301,14 @@ fn fetch_captured_request(
   let next_ref = next_ref + 1
 
   // -------- HACK to get resolve function
-  let ref = js.make_reference(Error(Nil))
+  let ref = ref.new(Error(Nil))
   let p =
     promise.new(fn(resolve) {
       // previous value was error
-      let assert Error(Nil) = js.set_reference(ref, Ok(resolve))
+      let assert Error(Nil) = ref.set(ref, Ok(resolve))
       Nil
     })
-  let assert Ok(resolve) = js.dereference(ref)
+  let assert Ok(resolve) = ref.get(ref)
   // -------- END HACK
 
   let resolve = fn(response: Response(BitArray)) {

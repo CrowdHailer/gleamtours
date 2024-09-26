@@ -7,7 +7,6 @@ import gleam/http
 import gleam/http/request.{type Request, Request}
 import gleam/http/response
 import gleam/io
-import gleam/javascript as js
 import gleam/javascript/promise
 import gleam/javascript/promisex
 import gleam/json
@@ -18,6 +17,7 @@ import gleam/uri.{Uri}
 import gleamtours/compiler.{type Compiler, Compiler}
 import gleamtours/editor/view
 import gleamtours/sandbox/proxy.{type Proxy, Proxy}
+import javascript/mutable_reference as ref
 import lustre
 import lustre/attribute as a
 import lustre/effect
@@ -612,9 +612,9 @@ pub fn app() {
 }
 
 fn new_debouncer(d) {
-  let ref = js.make_reference(None)
+  let ref = ref.new(None)
   fn() {
-    case js.dereference(ref) {
+    case ref.get(ref) {
       None -> Nil
       Some(timer) -> global.clear_timeout(timer)
     }
@@ -623,7 +623,7 @@ fn new_debouncer(d) {
         d(Timeout)
         Nil
       })
-    js.set_reference(ref, Some(timer))
+    ref.set(ref, Some(timer))
     Nil
   }
 }
