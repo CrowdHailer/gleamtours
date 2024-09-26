@@ -3,7 +3,7 @@
 
 packages = [
   { name = "conversation", version = "1.4.3", build_tools = ["gleam"], requirements = ["gleam_http", "gleam_javascript", "gleam_stdlib"], otp_app = "conversation", source = "hex", outer_checksum = "908B46F60444442785A495197D482558AD8B849C3714A38FAA1940358CC8CCCD" },
-  { name = "eyg", version = "0.1.0", build_tools = ["gleam"], requirements = ["gleam_bitwise", "gleam_community_codec", "gleam_fetch", "gleam_http", "gleam_javascript", "gleam_json", "gleam_stdlib", "javascript_mutable_reference", "jot", "lustre", "midas", "midas_browser", "plinth", "simplifile", "snag"], source = "local", path = "../../../eyg-lang/eyg" },
+  { name = "eyg", version = "0.1.0", build_tools = ["gleam"], requirements = ["gleam_bitwise", "gleam_community_codec", "gleam_fetch", "gleam_http", "gleam_javascript", "gleam_json", "gleam_stdlib", "javascript_mutable_reference", "jot", "lustre", "midas", "midas_browser", "midas_sdk", "plinth", "simplifile", "snag"], source = "local", path = "../../../eyg-lang/eyg" },
   { name = "filepath", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "filepath", source = "hex", outer_checksum = "EFB6FF65C98B2A16378ABC3EE2B14124168C0CE5201553DE652E2644DCFDB594" },
   { name = "gleam_bitwise", version = "1.3.1", build_tools = ["gleam"], requirements = [], otp_app = "gleam_bitwise", source = "hex", outer_checksum = "B36E1D3188D7F594C7FD4F43D0D2CE17561DE896202017548578B16FE1FE9EFC" },
   { name = "gleam_community_ansi", version = "1.4.1", build_tools = ["gleam"], requirements = ["gleam_community_colour", "gleam_stdlib"], otp_app = "gleam_community_ansi", source = "hex", outer_checksum = "4CD513FC62523053E62ED7BAC2F36136EC17D6A8942728250A9A00A15E340E4B" },
@@ -26,9 +26,10 @@ packages = [
   { name = "jot", version = "1.0.2", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "jot", source = "hex", outer_checksum = "3FF0DFCF96716131FB78DEC8FBC0316BEF896E28119E0980F3EC185548CD5AF1" },
   { name = "lustre", version = "4.4.4", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_json", "gleam_otp", "gleam_stdlib"], otp_app = "lustre", source = "hex", outer_checksum = "35A8597B3054AFAF734A54979B7C92D8AB43273B843717F854CF5A05CF2BC00E" },
   { name = "marceau", version = "1.2.0", build_tools = ["gleam"], requirements = [], otp_app = "marceau", source = "hex", outer_checksum = "5188D643C181EE350D8A20A3BDBD63AF7B6C505DE333CFBE05EF642ADD88A59B" },
-  { name = "midas", version = "0.4.7", build_tools = ["gleam"], requirements = ["gleam_http", "gleam_json", "gleam_stdlib", "snag"], otp_app = "midas", source = "hex", outer_checksum = "B0B547EA5139E63B79B3CE3246098F9EA1162E2B96A7D4938E3EB8736FF3AE9E" },
-  { name = "midas_browser", version = "0.1.0", build_tools = ["gleam"], requirements = ["gleam_fetch", "gleam_javascript", "gleam_stdlib", "midas", "plinth"], source = "local", path = "../../../mono-2024/midas_browser" },
+  { name = "midas", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_http", "gleam_json", "gleam_stdlib", "snag"], otp_app = "midas", source = "hex", outer_checksum = "9998A1A75E545B3E4590B7CAD9EA0C3462CD7D5347B8DC2DFBADB5C42A42BD5A" },
+  { name = "midas_browser", version = "0.1.1", build_tools = ["gleam"], requirements = ["gleam_fetch", "gleam_javascript", "gleam_stdlib", "midas", "plinth"], source = "local", path = "../../../mono-2024/midas_browser" },
   { name = "midas_node", version = "0.1.0", build_tools = ["gleam"], requirements = ["filepath", "gleam_fetch", "gleam_http", "gleam_javascript", "gleam_json", "gleam_package_interface", "gleam_stdlib", "glen", "glen_node", "midas", "plinth", "shellout", "simplifile", "snag"], source = "local", path = "../../../mono-2024/midas_node" },
+  { name = "midas_sdk", version = "0.1.0", build_tools = ["gleam"], requirements = ["gleam_http", "gleam_json", "gleam_stdlib", "midas", "snag"], source = "local", path = "../../../mono-2024/midas_sdk" },
   { name = "netlify", version = "1.0.0", build_tools = ["gleam"], requirements = ["conversation", "filepath", "gleam_fetch", "gleam_http", "gleam_javascript", "gleam_stdlib", "glen", "marceau"], source = "local", path = "../../../mono-2024/netlify" },
   { name = "plinth", version = "0.4.14", build_tools = ["gleam"], requirements = ["conversation", "gleam_javascript", "gleam_json", "gleam_stdlib"], otp_app = "plinth", source = "hex", outer_checksum = "1954376A2E19735B251F73B33C5D119AEB838BD589475884710B224E402F1546" },
   { name = "pojo", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_http", "gleam_json", "gleam_stdlib"], otp_app = "pojo", source = "hex", outer_checksum = "3623083F3417A70A8E5D66DF1749B60E18586D8E44379883AF863C6BD02FEE3D" },
@@ -52,7 +53,7 @@ glen_node = { version = ">= 0.0.1 and < 1.0.0" }
 glexer = { path = "../../../glexer" }
 javascript_mutable_reference = { version = ">= 1.0.0 and < 2.0.0" }
 lustre = { version = ">= 4.2.4 and < 5.0.0" }
-midas = { version = ">= 0.4.0 and < 1.0.0" }
+midas = { version = ">= 1.0.0 and < 2.0.0" }
 midas_browser = { path = "../../../mono-2024/midas_browser" }
 midas_node = { path = "../../../mono-2024/midas_node" }
 netlify = { path = "../../../mono-2024/netlify" }
