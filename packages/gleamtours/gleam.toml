@@ -13,7 +13,8 @@ gleam_stdlib = ">= 0.40.0 and < 2.0.0"
 glen_node = ">= 0.0.1 and < 1.0.0"
 glexer = {path = "../../../glexer"}
 lustre = ">= 4.2.4 and < 5.0.0"
-midas_run = {path = "../../../mono-2024/midas_run"}
+midas_node = {path = "../../../mono-2024/midas_node"}
+midas_browser = {path = "../../../mono-2024/midas_browser"}
 netlify = {path = "../../../mono-2024/netlify"}
 plinth = ">= 0.4.13 and < 1.0.0"
 # plinth = {path= "../../../plinth"}

@@ -5,8 +5,8 @@ import gleam/dynamic
 import gleam/result
 import gleam/string
 import gleamtours/compiler/prelude.{prelude}
+import midas/browser/gleam
 import midas/js/run as r
-import midas/web/gleam
 import plinth/browser/window
 import snag
 

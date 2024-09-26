@@ -9,11 +9,11 @@ import gleamtours/index
 import gleamtours/lesson
 import glen_node
 import midas/js/run as r
+import midas/node
+import midas/node/file_system as fs
+import midas/node/gleam
+import midas/node/rollup
 import midas/sdk/netlify
-import midas/shell
-import midas/shell/file_system as fs
-import midas/shell/gleam
-import midas/shell/rollup
 import midas/task as t
 import netlify as netlify_local
 import simplifile
@@ -262,7 +262,7 @@ pub const ctrl_prod_app = netlify.App(
 pub fn deploy(app, root) {
   let work = r.map_error(build(ctrl_prod_app), snag.layer(_, "Build failed"))
   use content <- r.await(work)
-  use response <- r.await(shell.run(do_deploy(app, site_id, content), root))
+  use response <- r.await(node.run(do_deploy(app, site_id, content), root))
   io.debug(response)
   r.done(Nil)
 }

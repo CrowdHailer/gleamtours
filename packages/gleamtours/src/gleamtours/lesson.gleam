@@ -24,15 +24,14 @@ import lustre/effect
 import lustre/element.{text} as _
 import lustre/element/html as h
 import lustre/event
-import midas/web/gleam
-import midas/web/rollup
+import midas/browser/gleam
+import midas/browser/rollup
 import platforms/browser/windows
 import plinth/browser/broadcast_channel
 import plinth/browser/document
 import plinth/browser/element
 import plinth/browser/message
 import plinth/browser/window.{type Window}
-import plinth/javascript/console
 import plinth/javascript/global
 import pojo/http/request as prequest
 import pojo/http/response as presponse
@@ -40,7 +39,6 @@ import pojo/http/utils
 import pojo/result as presult
 import snag.{type Result}
 import tour
-import zip_js
 
 pub fn page(lesson) {
   tour.lesson_page_render(lesson)
@@ -498,10 +496,11 @@ fn run_script(compiler, return, dispatch) {
           dynamic.field("name", dynamic.string),
           dynamic.field("content", utils.body_decoder),
         ))(dynamic.from(payload))
-      use zipped <- promise.await(zip_js.zip(files))
-      let zipped = utils.body_to_json(zipped)
-      let next = then(dynamic.from(zipped))
-      run_script(compiler, dynamic.from(next), dispatch)
+      todo as "Zip unsupported in this environment"
+      // use zipped <- promise.await(zip_js.zip(files))
+      // let zipped = utils.body_to_json(zipped)
+      // let next = then(dynamic.from(zipped))
+      // run_script(compiler, dynamic.from(next), dispatch)
     }
     "Done" -> {
       let final = case dynamic.string(dynamic.from(payload)) {
