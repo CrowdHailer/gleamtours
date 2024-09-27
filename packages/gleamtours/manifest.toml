@@ -19,7 +19,7 @@ packages = [
   { name = "gleam_stdlib", version = "0.40.0", build_tools = ["gleam"], requirements = [], otp_app = "gleam_stdlib", source = "hex", outer_checksum = "86606B75A600BBD05E539EB59FABC6E307EEEA7B1E5865AFB6D980A93BCB2181" },
   { name = "gleeunit", version = "1.2.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleeunit", source = "hex", outer_checksum = "F7A7228925D3EE7D0813C922E062BFD6D7E9310F0BEE585D3A42F3307E3CFD13" },
   { name = "glen", version = "2.2.0", build_tools = ["gleam"], requirements = ["conversation", "filepath", "gleam_community_ansi", "gleam_http", "gleam_javascript", "gleam_stdlib", "marceau"], otp_app = "glen", source = "hex", outer_checksum = "0100D9B9EFF0B4A188AC354CE708DBD38CBE581C98A77E88CC8CA242002D6CE0" },
-  { name = "glen_node", version = "0.0.1", build_tools = ["gleam"], requirements = ["gleam_javascript", "glen"], source = "local", path = "../../../mono-2024/glen_node" },
+  { name = "glen_node", version = "0.0.1", build_tools = ["gleam"], requirements = ["gleam_javascript", "glen"], source = "local", path = "../../../glen_node" },
   { name = "glexer", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], source = "local", path = "../../../glexer" },
   { name = "htmb", version = "2.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "htmb", source = "hex", outer_checksum = "915186FE1759EB8B78CBDC01228D0B7ED74DA2E64B08B4115525E293B036C428" },
   { name = "javascript_mutable_reference", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "javascript_mutable_reference", source = "hex", outer_checksum = "3EE953EE7FE4FAFD17C16F24184F4C832FE260D761753F28F20D4AC1DA080F03" },
@@ -27,10 +27,10 @@ packages = [
   { name = "lustre", version = "4.4.4", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_json", "gleam_otp", "gleam_stdlib"], otp_app = "lustre", source = "hex", outer_checksum = "35A8597B3054AFAF734A54979B7C92D8AB43273B843717F854CF5A05CF2BC00E" },
   { name = "marceau", version = "1.2.0", build_tools = ["gleam"], requirements = [], otp_app = "marceau", source = "hex", outer_checksum = "5188D643C181EE350D8A20A3BDBD63AF7B6C505DE333CFBE05EF642ADD88A59B" },
   { name = "midas", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_http", "gleam_json", "gleam_stdlib", "snag"], otp_app = "midas", source = "hex", outer_checksum = "9998A1A75E545B3E4590B7CAD9EA0C3462CD7D5347B8DC2DFBADB5C42A42BD5A" },
-  { name = "midas_browser", version = "0.1.1", build_tools = ["gleam"], requirements = ["gleam_fetch", "gleam_javascript", "gleam_stdlib", "midas", "plinth"], source = "local", path = "../../../mono-2024/midas_browser" },
-  { name = "midas_node", version = "0.1.0", build_tools = ["gleam"], requirements = ["filepath", "gleam_fetch", "gleam_http", "gleam_javascript", "gleam_json", "gleam_package_interface", "gleam_stdlib", "glen", "glen_node", "midas", "plinth", "shellout", "simplifile", "snag"], source = "local", path = "../../../mono-2024/midas_node" },
-  { name = "midas_sdk", version = "0.1.0", build_tools = ["gleam"], requirements = ["gleam_http", "gleam_json", "gleam_stdlib", "midas", "snag"], source = "local", path = "../../../mono-2024/midas_sdk" },
-  { name = "netlify", version = "1.0.0", build_tools = ["gleam"], requirements = ["conversation", "filepath", "gleam_fetch", "gleam_http", "gleam_javascript", "gleam_stdlib", "glen", "marceau"], source = "local", path = "../../../mono-2024/netlify" },
+  { name = "midas_browser", version = "0.1.1", build_tools = ["gleam"], requirements = ["gleam_fetch", "gleam_javascript", "gleam_stdlib", "midas", "plinth"], otp_app = "midas_browser", source = "hex", outer_checksum = "E432C8A5982A6D93F38C421E6B2027DBAC21279EEECC8941F16B1C5F12470841" },
+  { name = "midas_node", version = "0.1.0", build_tools = ["gleam"], requirements = ["filepath", "gleam_fetch", "gleam_http", "gleam_javascript", "gleam_json", "gleam_package_interface", "gleam_stdlib", "glen", "glen_node", "midas", "plinth", "shellout", "simplifile", "snag"], source = "local", path = "../../../midas_node" },
+  { name = "midas_sdk", version = "0.1.0", build_tools = ["gleam"], requirements = ["gleam_http", "gleam_json", "gleam_stdlib", "midas", "snag"], otp_app = "midas_sdk", source = "hex", outer_checksum = "B276EEBB929AC37F146A239D33ABB2ED59492128F2A84A3556C318A788C7AC3B" },
+  { name = "netlify", version = "1.0.0", build_tools = ["gleam"], requirements = ["conversation", "filepath", "gleam_fetch", "gleam_http", "gleam_javascript", "gleam_stdlib", "glen", "marceau"], source = "local", path = "../../../netlify" },
   { name = "plinth", version = "0.4.14", build_tools = ["gleam"], requirements = ["conversation", "gleam_javascript", "gleam_json", "gleam_stdlib"], otp_app = "plinth", source = "hex", outer_checksum = "1954376A2E19735B251F73B33C5D119AEB838BD589475884710B224E402F1546" },
   { name = "pojo", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_http", "gleam_json", "gleam_stdlib"], otp_app = "pojo", source = "hex", outer_checksum = "3623083F3417A70A8E5D66DF1749B60E18586D8E44379883AF863C6BD02FEE3D" },
   { name = "shellout", version = "1.6.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "shellout", source = "hex", outer_checksum = "E2FCD18957F0E9F67E1F497FC9FF57393392F8A9BAEAEA4779541DE7A68DD7E0" },
@@ -54,9 +54,10 @@ glexer = { path = "../../../glexer" }
 javascript_mutable_reference = { version = ">= 1.0.0 and < 2.0.0" }
 lustre = { version = ">= 4.2.4 and < 5.0.0" }
 midas = { version = ">= 1.0.0 and < 2.0.0" }
-midas_browser = { path = "../../../mono-2024/midas_browser" }
-midas_node = { path = "../../../mono-2024/midas_node" }
-netlify = { path = "../../../mono-2024/netlify" }
+midas_browser = { version = ">= 0.1.1 and < 1.0.0" }
+midas_node = { path = "../../../midas_node" }
+midas_sdk = { version = ">= 0.1.0 and < 1.0.0" }
+netlify = { path = "../../../netlify" }
 plinth = { version = ">= 0.4.13 and < 1.0.0" }
 pojo = { version = ">= 1.0.1 and < 2.0.0" }
 simplifile = { version = ">= 1.7.0 and < 2.0.0" }

@@ -43,7 +43,7 @@ fn build(netlify_app) {
   ]
 
   let tour_static_dir =
-    string.replace(project, "/mono-2024/ctrl", "/language-tour/static")
+    string.replace(project, "/ctrl", "/language-tour/static")
   // needs to be a t.try_promise_map for proper use of t inside
   use static <- r.try(
     list.try_map(tour_styles, fn(path) {
@@ -76,8 +76,7 @@ fn build(netlify_app) {
   use proxy_js <- r.await(bundle_js(project, module, func))
   let proxy_js = bit_array.from_string(proxy_js)
 
-  let tours_dir =
-    string.replace(project, "/mono-2024/ctrl", "/gleamtours/tours")
+  let tours_dir = string.replace(project, "/ctrl", "/gleamtours/tours")
   use filenames <- r.try(tour.load_directory_names(tours_dir))
 
   use tours <- r.try(

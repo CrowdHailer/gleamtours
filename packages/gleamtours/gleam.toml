@@ -13,17 +13,17 @@ gleam_stdlib = ">= 0.40.0 and < 2.0.0"
 glen_node = ">= 0.0.1 and < 1.0.0"
 glexer = {path = "../../../glexer"}
 lustre = ">= 4.2.4 and < 5.0.0"
-midas_node = {path = "../../../mono-2024/midas_node"}
-midas_browser = {path = "../../../mono-2024/midas_browser"}
-netlify = {path = "../../../mono-2024/netlify"}
+midas_node = {path = "../../../midas_node"}
+netlify = {path = "../../../netlify"}
 plinth = ">= 0.4.13 and < 1.0.0"
-# plinth = {path= "../../../plinth"}
 simplifile = ">= 1.7.0 and < 2.0.0"
 snag = ">= 0.3.0 and < 1.0.0"
 tour = {path = "../../../language-tour"}
 pojo = ">= 1.0.1 and < 2.0.0"
 midas = ">= 1.0.0 and < 2.0.0"
 javascript_mutable_reference = ">= 1.0.0 and < 2.0.0"
+midas_sdk = ">= 0.1.0 and < 1.0.0"
+midas_browser = ">= 0.1.1 and < 1.0.0"
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
