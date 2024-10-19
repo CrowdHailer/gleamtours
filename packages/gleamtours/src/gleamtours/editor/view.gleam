@@ -77,7 +77,7 @@ pub fn render(code, on_update) {
             Error([])
           }),
           e.on("scroll", fn(event) {
-            let assert Ok(event) = event.cast(event)
+            let assert Ok(event) = event.cast_event(event)
             let target = event.target(event)
             window.request_animation_frame(fn(_) {
               let assert Ok(target) = element.cast(target)
