@@ -95,7 +95,6 @@ fn build(netlify_app) {
                 path: prepend(l.path),
                 previous: option.map(l.previous, prepend),
                 next: option.map(l.next, prepend),
-                next: option.map(l.next, prepend),
               )
             })
           tour.Chapter(..c, lessons: lessons)
