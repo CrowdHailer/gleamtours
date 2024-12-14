@@ -44,7 +44,7 @@ pub fn render(code, on_update) {
             #("overflow", "auto"),
           ]),
         ],
-        highlight2(code),
+        highlight(code),
       ),
       h.textarea(
         [
@@ -194,34 +194,7 @@ fn token_to_string(token) {
   }
 }
 
-pub fn highlight(code) {
-  let tokens =
-    code
-    |> glexer.new()
-    |> glexer.lex()
-
-  let #(current, _position, buffer, acc) =
-    list.fold(tokens, #("", 0, "", []), fn(state, token) {
-      let #(current, position, buffer, acc) = state
-      let #(token, glexer.Position(offset)) = token
-      let pad = offset - position
-      let buffer = string.append(buffer, string.repeat(" ", pad))
-      let #(class, printed) = token_to_string(token)
-      let #(buffer, acc) = case class == current {
-        True -> #(string.append(buffer, printed), acc)
-        False -> #(printed, [wrap(buffer, current), ..acc])
-      }
-      let state = #(class, offset + string.length(printed), buffer, acc)
-      state
-    })
-  case buffer {
-    "" -> acc
-    _ -> [wrap(buffer, current), ..acc]
-  }
-  |> list.reverse
-}
-
-pub fn highlight2(code) {
+fn highlight(code) {
   let tokens =
     code
     |> glexer.new()
