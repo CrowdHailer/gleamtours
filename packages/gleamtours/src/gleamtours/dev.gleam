@@ -33,7 +33,7 @@ fn bundle_js(dir, module, func) {
   rollup.bundle_fn(js_dir, module_path, func)
 }
 
-fn build(netlify_app) {
+fn build(_netlify_app) {
   use project <- r.try(fs.current_directory())
 
   let tour_styles = [
@@ -199,7 +199,7 @@ fn build(netlify_app) {
 ",
     )
   let pages =
-    list.concat([
+    list.flatten([
       [
         #("/_redirects", bit_array.from_string(redirects)),
         #("/auth/twitter/index.html", auth_page),

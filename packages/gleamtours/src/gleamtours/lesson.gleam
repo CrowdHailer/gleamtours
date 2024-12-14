@@ -490,13 +490,13 @@ fn run_script(compiler, return, dispatch) {
       run_script(compiler, dynamic.from(next), dispatch)
     }
     "Zip" -> {
-      let assert Ok(files) =
+      let assert Ok(_files) =
         dynamic.list(dynamic.decode2(
           fn(a, b) { #(a, b) },
           dynamic.field("name", dynamic.string),
           dynamic.field("content", utils.body_decoder),
         ))(dynamic.from(payload))
-      todo as "Zip unsupported in this environment"
+      panic as "Zip unsupported in this environment"
       // use zipped <- promise.await(zip_js.zip(files))
       // let zipped = utils.body_to_json(zipped)
       // let next = then(dynamic.from(zipped))

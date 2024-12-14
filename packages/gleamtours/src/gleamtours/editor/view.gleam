@@ -1,6 +1,4 @@
-import gleam/dynamic
 import gleam/int
-import gleam/io
 import gleam/list
 import gleam/string
 import glexer
@@ -13,7 +11,6 @@ import plinth/browser/document
 import plinth/browser/element
 import plinth/browser/event
 import plinth/browser/window
-import plinth/javascript/console
 
 // https://css-tricks.com/creating-an-editable-textarea-that-supports-syntax-highlighted-code/
 const monospace = "ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,\"Liberation Mono\",\"Courier New\",monospace"
@@ -107,21 +104,27 @@ fn token_to_string(token) {
     t.Int(value) -> #("", value)
     t.Float(value) -> #("", value)
     t.String(value) -> #("string", "\"" <> value <> "\"")
-    t.CommentDoc(value) -> #("comment", "///" <> value)
 
     // Keywords
     t.As -> #("keyword", "as")
     t.Assert -> #("keyword", "assert")
+    t.Auto -> #("keyword", "auto")
     t.Case -> #("keyword", "case")
     t.Const -> #("keyword", "const")
-    t.External -> #("keyword", "external")
+    t.Delegate -> #("keyword", "delegate")
+    t.Derive -> #("keyword", "derive")
+    t.Echo -> #("keyword", "echo")
+    t.Else -> #("keyword", "else")
     t.Fn -> #("keyword", "fn")
     t.If -> #("keyword", "if")
+    t.Implement -> #("keyword", "implement")
     t.Import -> #("keyword", "import")
     t.Let -> #("keyword", "let")
+    t.Macro -> #("keyword", "macro")
     t.Opaque -> #("keyword", "opaque")
     t.Panic -> #("keyword", "panic")
     t.Pub -> #("keyword", "pub")
+    t.Test -> #("keyword", "test")
     t.Todo -> #("keyword", "todo")
     t.Type -> #("keyword", "type")
     t.Use -> #("keyword", "use")
@@ -181,11 +184,11 @@ fn token_to_string(token) {
 
     // Extra
     t.CommentNormal(content) -> #("comment", "//" <> content)
+    t.CommentDoc(value) -> #("comment", "///" <> value)
     t.CommentModule(content) -> #("comment", "////" <> content)
-    t.Blank(value) -> #("", value)
-    t.EmptyLine -> panic as "should never be part of forked tokenisation output"
 
     // Invalid code tokens
+    t.Space(value) -> #("", value)
     t.UnterminatedString(value) -> #("", value)
     t.UnexpectedGrapheme(value) -> #("", value)
   }
