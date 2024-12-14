@@ -8,7 +8,6 @@ import gleam/http/request.{type Request, Request}
 import gleam/http/response
 import gleam/io
 import gleam/javascript/promise
-import gleam/javascript/promisex
 import gleam/json
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -24,9 +23,9 @@ import lustre/effect
 import lustre/element.{text} as _
 import lustre/element/html as h
 import lustre/event
+import midas/browser
 import midas/browser/gleam
 import midas/browser/rollup
-import platforms/browser/windows
 import plinth/browser/broadcast_channel
 import plinth/browser/document
 import plinth/browser/element
@@ -308,13 +307,23 @@ pub fn update(app, message) {
       effect.from(fn(_dispatch) {
         let Proxy(service_worker: service_worker, ..) = proxy
 
-        use response <- promisex.aside(case environment {
-          WebServer ->
-            handle_as_webserver(compiler, proxy.client_id, project_id, request)
-          WebApp -> handle_as_webapp(compiler, project_id, request.path)
-          Task -> handle_as_script(compiler, project_id, request)
-        })
-        proxy.send_response(service_worker, caller_id, Ok(response))
+        promise.map(
+          case environment {
+            WebServer ->
+              handle_as_webserver(
+                compiler,
+                proxy.client_id,
+                project_id,
+                request,
+              )
+            WebApp -> handle_as_webapp(compiler, project_id, request.path)
+            Task -> handle_as_script(compiler, project_id, request)
+          },
+          fn(response) {
+            proxy.send_response(service_worker, caller_id, Ok(response))
+          },
+        )
+        Nil
       }),
     )
 
@@ -433,7 +442,7 @@ fn run_script(compiler, return, dispatch) {
     "Follow" -> {
       let assert Ok(path) = dynamic.string(dynamic.from(payload))
       // let assert Ok(popup) = browser.open(path)
-      let assert Ok(popup) = windows.open(path, #(600, 700))
+      let assert Ok(popup) = browser.open(path, #(600, 700))
       use redirect <- promise.await(
         promise.new(fn(resolve) {
           let assert Ok(channel) = broadcast_channel.new("auth")
@@ -536,7 +545,7 @@ pub type Serialized {
 fn open_sandbox(path, compiler, debouncer, proxy, opened, environment, run) {
   let app = case opened {
     None -> {
-      let assert Ok(sandbox) = windows.open(path, #(800, 800))
+      let assert Ok(sandbox) = browser.open(path, #(800, 800))
       // state overrides to compiled to close iframe
       let compiler = Compiler(..compiler, state: compiler.Compiled([]))
       App(compiler, debouncer, proxy, Some(sandbox), environment, run)
@@ -544,7 +553,7 @@ fn open_sandbox(path, compiler, debouncer, proxy, opened, environment, run) {
     Some(sandbox) -> {
       case window.closed(sandbox) {
         True -> {
-          let assert Ok(sandbox) = windows.open(path, #(800, 800))
+          let assert Ok(sandbox) = browser.open(path, #(800, 800))
           // state overrides to compiled to close iframe
           let compiler = Compiler(..compiler, state: compiler.Compiled([]))
           App(compiler, debouncer, proxy, Some(sandbox), environment, run)

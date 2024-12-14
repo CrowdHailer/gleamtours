@@ -4,7 +4,6 @@ target = "javascript"
 
 [dependencies]
 conversation = ">= 1.4.3 and < 2.0.0"
-eyg = {path= "../../../eyg-lang/eyg"}
 filepath = ">= 1.0.0 and < 2.0.0"
 gleam_http = ">= 3.6.0 and < 4.0.0"
 gleam_javascript = ">= 0.8.0 and < 1.0.0"
@@ -12,7 +11,6 @@ gleam_json = ">= 1.0.0 and < 3.0.0"
 gleam_stdlib = ">= 0.40.0 and < 2.0.0"
 glen_node = ">= 0.0.1 and < 1.0.0"
 lustre = ">= 4.2.4 and < 5.0.0"
-midas_node = {path = "../../../midas_node"}
 netlify = {path = "../../../netlify"}
 plinth = ">= 0.4.13 and < 1.0.0"
 simplifile = ">= 1.7.0 and < 2.0.0"
@@ -25,6 +23,7 @@ midas_sdk = ">= 0.1.0 and < 1.0.0"
 midas_browser = ">= 0.1.1 and < 1.0.0"
 glexer = ">= 2.0.0 and < 3.0.0"
 gleam_fetch = ">= 1.1.0 and < 2.0.0"
+midas_node = ">= 1.2.1 and < 2.0.0"
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
