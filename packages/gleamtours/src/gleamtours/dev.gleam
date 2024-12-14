@@ -2,12 +2,11 @@ import filepath
 import gleam/bit_array
 import gleam/io
 import gleam/list
-import gleam/option.{None}
+import gleam/option.{None, Some}
 import gleam/result
 import gleam/string
 import gleamtours/index
 import gleamtours/lesson
-import glen_node
 import midas/js/run as r
 import midas/node
 import midas/node/file_system as fs
@@ -15,7 +14,7 @@ import midas/node/gleam
 import midas/node/rollup
 import midas/sdk/netlify
 import midas/task as t
-import netlify as netlify_local
+import mysig/local
 import simplifile
 import snag
 import tour
@@ -243,7 +242,7 @@ pub fn preview(local_app) {
   let work = r.map_error(build(local_app), snag.layer(_, "Build failed"))
   use files <- r.await(work)
   io.debug("serving")
-  let assert Ok(_) = glen_node.serve(8080, netlify_local.dev(files))
+  node.run(local.serve(Some(8080), files), "")
   r.done(Nil)
 }
 
