@@ -37,11 +37,6 @@ import pojo/http/response as presponse
 import pojo/http/utils
 import pojo/result as presult
 import snag.{type Result}
-import tour
-
-pub fn page(lesson) {
-  tour.lesson_page_render(lesson)
-}
 
 fn environment() {
   case uri.parse(window.location()) {
@@ -579,44 +574,56 @@ fn resource(resource) {
 }
 
 pub fn view(app) {
-  h.section([a.id("right")], case app {
-    Preparing(code, compiler, proxy) -> [
-      h.section([a.id("editor")], [editor(code, CodeChange)]),
-      h.aside([a.id("output")], [
-        h.div([], [text("compiler "), resource(compiler)]),
-        h.div([], [text("proxy "), resource(proxy)]),
+  // styles needed to use the main css from tours
+  h.div(
+    [
+      a.class(""),
+      a.style([
+        #("height", "100%"),
+        #("display", "flex"),
+        #("flex-direction", "column"),
+        #("border", "pink 1px solid"),
       ]),
-    ]
-    App(compiler: compiler, run: run, ..) -> {
-      let Compiler(code: code, state: state, ..) = compiler
-      [
+    ],
+    case app {
+      Preparing(code, compiler, proxy) -> [
         h.section([a.id("editor")], [editor(code, CodeChange)]),
-        h.aside([a.id("output")], case run, state {
-          Some(items), _ -> [
-            h.pre(
-              [],
-              list.map(list.reverse(items), fn(item) { h.p([], [text(item)]) }),
-            ),
-          ]
-          None, compiler.Compiled(warnings) ->
-            list.map(warnings, fn(warning) {
-              h.pre([a.class("warning")], [text(warning)])
-            })
-          None, compiler.Errored(reason) -> [
-            h.pre([a.class("error")], [text(reason)]),
-          ]
-          None, compiler.Dirty -> []
-        }),
+        h.aside([a.id("output")], [
+          h.div([], [text("compiler "), resource(compiler)]),
+          h.div([], [text("proxy "), resource(proxy)]),
+        ]),
       ]
-    }
-  })
+      App(compiler: compiler, run: run, ..) -> {
+        let Compiler(code: code, state: state, ..) = compiler
+        [
+          h.section([a.id("editor")], [editor(code, CodeChange)]),
+          h.aside([a.id("output")], case run, state {
+            Some(items), _ -> [
+              h.pre(
+                [],
+                list.map(list.reverse(items), fn(item) { h.p([], [text(item)]) }),
+              ),
+            ]
+            None, compiler.Compiled(warnings) ->
+              list.map(warnings, fn(warning) {
+                h.pre([a.class("warning")], [text(warning)])
+              })
+            None, compiler.Errored(reason) -> [
+              h.pre([a.class("error")], [text(reason)]),
+            ]
+            None, compiler.Dirty -> []
+          }),
+        ]
+      }
+    },
+  )
 }
 
 pub fn app() {
   let assert Ok(container) = document.query_selector("#code")
   let initial = element.inner_text(container)
   let app = lustre.application(init, update, view)
-  let assert Ok(_) = lustre.start(app, "#right", initial)
+  let assert Ok(_) = lustre.start(app, "#app", initial)
   Nil
 }
 

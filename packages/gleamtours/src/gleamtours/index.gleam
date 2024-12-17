@@ -1,61 +1,194 @@
 import gleam/list
 import lustre/attribute as a
-import lustre/element.{text}
+import lustre/element
 import lustre/element/html as h
-
-pub const tailwind = "https://unpkg.com/tailwindcss@2.2.11/dist/tailwind.min.css"
-
-fn viewport(domain) {
-  [
-    h.meta([a.attribute("charset", "UTF-8")]),
-    h.meta([
-      a.attribute("http-equiv", "X-UA-Compatible"),
-      a.attribute("content", "IE=edge"),
-    ]),
-    h.meta([a.attribute("viewport", "width=device-width, initial-scale=1.0")]),
-    h.script(
-      [
-        a.attribute("defer", ""),
-        a.attribute("data-domain", domain),
-        a.src("https://plausible.io/js/script.js"),
-      ],
-      "",
-    ),
-  ]
-}
-
-fn standard(head, body) {
-  h.html([a.attribute("lang", "en")], [
-    h.head([], list.append(viewport("gleamtours.com"), head)),
-    h.body([], body),
-  ])
-}
-
-fn page(content) {
-  standard(
-    [
-      h.link([a.rel("stylesheet"), a.href(tailwind)]),
-      h.link([
-        a.rel("stylesheet"),
-        a.href(" https://tour.gleam.run/css/code/syntax-highlight.css"),
-      ]),
-      // not part of this project
-      h.link([a.rel("stylesheet"), a.href("/layout.css")]),
-    ],
-    [h.div([a.class("vstack mx-auto max-w-2xl")], content)],
-  )
-  |> element.to_document_string
-}
+import mysig/html
 
 pub fn view(tours) {
-  page([
-    h.ol(
-      [],
-      list.map(tours, fn(tour) {
-        let #(name, _slug, first_path, _lessons, _deps) = tour
+  let content =
+    html.doc(
+      "Gleam tours",
+      [
+        html.stylesheet("/css/fonts.css"),
+        html.stylesheet("/css/theme.css"),
+        html.stylesheet("/common.css"),
+        html.stylesheet("/css/layout.css"),
+        html.stylesheet("/css/root.css"),
+        html.stylesheet("/css/code/syntax-highlight.css"),
+        html.stylesheet("/css/code/color-schemes/atom-one.css"),
+        html.stylesheet("/css/pages/lesson.css"),
+        html.plausible("gleamtours.com"),
+      ],
+      [
+        underlay("var(--aged-plastic-yellow)", [
+          h.div(
+            [
+              a.style([
+                #("max-width", "60rem"),
+                #("width", "100%"),
+                #("margin", "0 auto"),
+                #("padding", "1rem"),
+              ]),
+            ],
+            [
+              hstack([#("gap", "1rem"), #("font-size", "1.2rem")], [
+                logo("30px"),
+                h.span([a.style([#("flex-grow", "1")])], [
+                  element.text("Gleam tours"),
+                ]),
+                h.span([], [
+                  h.a([a.href("https://github.com/CrowdHailer/gleamtours")], [
+                    element.text("code"),
+                  ]),
+                ]),
+              ]),
+            ],
+          ),
+          h.div(
+            [
+              a.style([
+                #("max-width", "60rem"),
+                #("margin", "40px auto 80px"),
+                #("flex-grow", "1"),
+              ]),
+            ],
+            [
+              hstack([#("gap", "2rem")], [
+                logo("300px"),
+                h.div([a.style([])], [
+                  h.p([a.style([#("font-size", "2rem"), #("margin", "1rem")])], [
+                    element.text("Learn about Gleam frameworks and libraries."),
+                  ]),
+                  h.p(
+                    [a.style([#("font-size", "1.2rem"), #("margin", "1rem")])],
+                    [
+                      element.text(
+                        "All tours are interactive and run right here in your browser, no install or setup needed.",
+                      ),
+                    ],
+                  ),
+                ]),
+              ]),
+              h.div(
+                [],
+                list.map(tours, fn(t) {
+                  let #(title, description, first) = t
+                  h.a(
+                    [
+                      a.style([
+                        #("display", "block"),
+                        #("text-decoration", "none"),
+                        #("margin", "20px 0"),
+                        #("border", "1px solid"),
+                        #("padding", "0 9px"),
+                        #("border-left", "10px solid"),
+                        #("border-radius", "20px"),
+                        #("border-color", "var(--underwater-blue)"),
+                      ]),
+                      a.href(first),
+                    ],
+                    [
+                      h.h3([], [element.text(title)]),
+                      h.p([], [element.text(description)]),
+                    ],
+                  )
+                }),
+              ),
+              h.div([a.style([#("font-style", "italic")])], [
+                element.text(
+                  "More tours coming soon. They will be announced in the ",
+                ),
+                h.a([a.href("https://gleamweekly.com/")], [
+                  element.text("Gleam Weekly"),
+                ]),
+                element.text(" newsletter when they are available."),
+              ]),
+            ],
+          ),
+          h.img([
+            a.style([#("width", "100%"), #("margin", "-10px 0")]),
+            a.src("https://gleam.run/images/waves.svg"),
+          ]),
+          h.div(
+            [
+              a.style([
+                #("background", "var(--underwater-blue)"),
+                #("color", "white"),
+              ]),
+            ],
+            [
+              h.div(
+                [
+                  a.style([
+                    #("max-width", "60rem"),
+                    #("margin", "0 auto"),
+                    #("padding", "1rem"),
+                  ]),
+                ],
+                [
+                  hstack(
+                    [
+                      #("gap", "1rem"),
+                      #("width", "100%"),
+                      #("font-size", "1.2rem"),
+                    ],
+                    [
+                      logo("30px"),
+                      h.span([a.style([#("flex-grow", "1")])], [
+                        element.text("Gleam tours"),
+                      ]),
+                      h.span([], [
+                        h.a(
+                          [a.href("https://github.com/CrowdHailer/gleamtours")],
+                          [element.text("code")],
+                        ),
+                      ]),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ]),
+      ],
+    )
+    |> element.to_document_string()
+  <<content:utf8>>
+}
 
-        h.li([], [h.a([a.href(first_path)], [text(name)])])
-      }),
-    ),
+fn underlay(color, children) {
+  h.div(
+    [
+      a.style([
+        #("min-height", "100vh"),
+        #("background", color),
+        #("display", "flex"),
+        #("flex-direction", "column"),
+      ]),
+    ],
+    children,
+  )
+}
+
+fn hstack(extra, children) {
+  h.div(
+    [
+      a.style([
+        #("display", "flex"),
+        #("width", "100%"),
+        #("align-items", "center"),
+        #("justify-content", "center"),
+        ..extra
+      ]),
+    ],
+    children,
+  )
+}
+
+fn logo(size) {
+  h.img([
+    a.src("https://gleam.run/images/lucy/lucy.svg"),
+    a.alt("Lucy the star, Gleam's mascot"),
+    a.style([#("max-width", size)]),
   ])
 }
