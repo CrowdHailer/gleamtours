@@ -1,24 +1,55 @@
 import gleam/list
+import gleam/option.{None, Some}
+import gleam/uri
 import lustre/attribute as a
 import lustre/element
 import lustre/element/html as h
 import mysig/html
+import mysig/preview
 
 pub fn view(tours) {
   let content =
     html.doc(
       "Gleam tours",
-      [
-        html.stylesheet("/css/fonts.css"),
-        html.stylesheet("/css/theme.css"),
-        html.stylesheet("/common.css"),
-        html.stylesheet("/css/layout.css"),
-        html.stylesheet("/css/root.css"),
-        html.stylesheet("/css/code/syntax-highlight.css"),
-        html.stylesheet("/css/code/color-schemes/atom-one.css"),
-        html.stylesheet("/css/pages/lesson.css"),
-        html.plausible("gleamtours.com"),
-      ],
+      list.flatten([
+        [
+          html.stylesheet("/css/fonts.css"),
+          html.stylesheet("/css/theme.css"),
+          html.stylesheet("/common.css"),
+          html.stylesheet("/css/layout.css"),
+          html.stylesheet("/css/root.css"),
+          html.stylesheet("/css/code/syntax-highlight.css"),
+          html.stylesheet("/css/code/color-schemes/atom-one.css"),
+          html.stylesheet("/css/pages/lesson.css"),
+          html.plausible("gleamtours.com"),
+        ],
+        preview.homepage(
+          title: "Gleam tours",
+          description: "Interactive tours to learn about Gleam frameworks and libraries.",
+          canonical: uri.Uri(
+            Some("https"),
+            None,
+            Some("gleamtours.com"),
+            None,
+            "/",
+            None,
+            None,
+          ),
+        ),
+        preview.optimum_image(
+          uri.Uri(
+            Some("https"),
+            None,
+            Some("gleamtours.com"),
+            None,
+            "/share.png",
+            None,
+            None,
+          ),
+          preview.png,
+          "Lucy the Gleam mascot at a laptop computer.",
+        ),
+      ]),
       [
         underlay("var(--aged-plastic-yellow)", [
           h.div(

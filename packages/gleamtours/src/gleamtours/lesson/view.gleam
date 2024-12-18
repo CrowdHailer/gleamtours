@@ -1,9 +1,12 @@
+import gleam/list
 import gleam/option.{None, Some}
+import gleam/uri
 import gleamtours/components
 import lustre/attribute as a
 import lustre/element
 import lustre/element/html as h
 import mysig/html
+import mysig/preview
 
 fn html_script(src) {
   h.script([a.src(src)], "")
@@ -11,30 +14,63 @@ fn html_script(src) {
 
 pub fn render(
   tour tour,
+  description description,
   contents_path contents_path,
   chapter _chapter,
   lesson lesson,
   text text,
   code code,
+  self self,
   previous previous,
   next next,
 ) {
   let content =
     html.doc(
       tour,
-      [
-        html.stylesheet("/css/fonts.css"),
-        html.stylesheet("/css/theme.css"),
-        html.stylesheet("/common.css"),
-        html.stylesheet("/css/layout.css"),
-        html.stylesheet("/css/root.css"),
-        // html.stylesheet("/css/pages/everything.css"),
-        html.stylesheet("/css/code/syntax-highlight.css"),
-        html.stylesheet("/css/code/color-schemes/atom-one.css"),
-        html.stylesheet("/css/pages/lesson.css"),
-        html.plausible("gleamtours.com"),
-        html_script("https://unpkg.com/@rollup/browser/dist/rollup.browser.js"),
-      ],
+      list.flatten([
+        [
+          html.stylesheet("/css/fonts.css"),
+          html.stylesheet("/css/theme.css"),
+          html.stylesheet("/common.css"),
+          html.stylesheet("/css/layout.css"),
+          html.stylesheet("/css/root.css"),
+          // html.stylesheet("/css/pages/everything.css"),
+          html.stylesheet("/css/code/syntax-highlight.css"),
+          html.stylesheet("/css/code/color-schemes/atom-one.css"),
+          html.stylesheet("/css/pages/lesson.css"),
+          html.plausible("gleamtours.com"),
+          html_script(
+            "https://unpkg.com/@rollup/browser/dist/rollup.browser.js",
+          ),
+        ],
+        preview.page(
+          site: "Gleam tours",
+          title: tour,
+          description: description,
+          canonical: uri.Uri(
+            Some("https"),
+            None,
+            Some("gleamtours.com"),
+            None,
+            self,
+            None,
+            None,
+          ),
+        ),
+        preview.optimum_image(
+          uri.Uri(
+            Some("https"),
+            None,
+            Some("gleamtours.com"),
+            None,
+            "/share.png",
+            None,
+            None,
+          ),
+          preview.png,
+          "Lucy the Gleam mascot at a laptop computer.",
+        ),
+      ]),
       [
         components.navbar(tour),
         h.article([a.id("playground")], [

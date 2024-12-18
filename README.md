@@ -7,6 +7,21 @@ Tours through various topics in Gleam available on https://gleamtours.com/
 Need to download wasm-compiler to `priv/vendor`.
 Need to build each tour package before serving.
 
+To start run
+```
+gleam run -m gleamtours/dev
+```
+
+To deploy
+```
+gleam run -m gleamtours/dev deploy
+```
+
+To generate social preview
+```
+gleam run -m gleamtours/dev social
+```
+
 ## Notes
 
 ## Nominal types differ if loaded twice

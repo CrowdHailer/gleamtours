@@ -7,6 +7,7 @@ import gleam/option.{None, Some}
 import gleam/string
 import gleamtours/index
 import gleamtours/lesson/view
+import gleamtours/social
 import justin
 import lustre/attribute as a
 import lustre/element
@@ -48,6 +49,15 @@ pub fn do_main(args) {
     }
     ["deploy"] -> {
       use result <- promise.map(node.run(deploy(), "../../.."))
+      case result {
+        Ok(_) -> "GOOD"
+        Error(reason) -> snag.pretty_print(reason)
+      }
+      |> io.print
+      0
+    }
+    ["social"] -> {
+      use result <- promise.map(node.run(social.serve(), "../../.."))
       case result {
         Ok(_) -> "GOOD"
         Error(reason) -> snag.pretty_print(reason)
@@ -102,6 +112,7 @@ fn load_prefix(root, prefix) {
 type LessonData {
   LessonData(
     path: String,
+    file_path: String,
     name: String,
     chapter_name: String,
     text: String,
@@ -110,15 +121,17 @@ type LessonData {
 }
 
 fn render_lesson(lesson, prev, next, tour) {
-  let #(_, tour, slug) = tour
-  let LessonData(_path, name, chapter_name, text, code) = lesson
+  let #(_, tour, slug, description) = tour
+  let LessonData(path, _file_path, name, chapter_name, text, code) = lesson
   view.render(
     tour: tour,
+    description: description,
     contents_path: "/" <> slug,
     chapter: chapter_name,
     lesson: name,
     text: text,
     code: code,
+    self: path,
     previous: option.map(prev, fn(d: LessonData) { d.path }),
     next: option.map(next, fn(d: LessonData) { d.path }),
   )
@@ -130,7 +143,7 @@ fn render_lessons(lessons, prev, tour, acc) {
     [lesson, ..rest] -> {
       let next = list.first(rest) |> option.from_result
       let content = render_lesson(lesson, prev, next, tour)
-      let acc = [#(lesson.path, content), ..acc]
+      let acc = [#(lesson.file_path, content), ..acc]
       render_lessons(rest, Some(lesson), tour, acc)
     }
   }
@@ -187,12 +200,20 @@ fn build() {
   use compiler_assets <- t.do(read_compiler_assets())
   use proxy_js <- t.do(t.bundle("gleamtours/sandbox/proxy", "run"))
 
-  let path = "/gleamtours/tours"
-  use tours <- t.do(load_prefix(path, ""))
+  // let path = "/gleamtours/tours"
+  // use tours <- t.do(load_prefix(path, ""))
+  let tours = [
+    #(
+      "/gleamtours/tours/01_lustre_tutorial",
+      "Lustre tutorial",
+      "lustre-tutorial",
+      "Get started building your first web app with the Lusture tutorial.",
+    ),
+  ]
   use lessons <- t.do(
     t.sequential(
       list.map(tours, fn(tour) {
-        let #(path, _tour_name, tour_slug) = tour
+        let #(path, tour_name, tour_slug, description) = tour
 
         let src_path = path <> "/src/guide"
         use chapters <- t.do(load_prefix(src_path, "chapter"))
@@ -211,14 +232,16 @@ fn build() {
                   let assert Ok(code) = bit_array.to_string(code)
 
                   let path =
-                    "/"
-                    <> tour_slug
-                    <> "/"
-                    <> chapter_slug
-                    <> "/"
-                    <> slug
-                    <> "/index.html"
-                  t.done(LessonData(path, name, chapter_name, text, code))
+                    "/" <> tour_slug <> "/" <> chapter_slug <> "/" <> slug
+                  let file_path = path <> "/index.html"
+                  t.done(LessonData(
+                    path,
+                    file_path,
+                    name,
+                    chapter_name,
+                    text,
+                    code,
+                  ))
                 }),
               )
             }),
@@ -244,11 +267,13 @@ fn build() {
         let lessons = list.flatten(lessons)
         let lesson_pages = render_lessons(lessons, None, tour, [])
 
-        let contents_path = "/" <> tour_slug <> "/index.html"
+        let contents_path = "/" <> tour_slug
+        let contents_file_path = contents_path <> "/index.html"
         let contents_page =
           render_lesson(
             LessonData(
               path: contents_path,
+              file_path: contents_file_path,
               name: "Table of Contents",
               chapter_name: "",
               text: element.to_string(element.fragment(content)),
@@ -263,19 +288,22 @@ fn build() {
         let deps = #("/" <> tour_slug <> "/deps.js", <<
           generate_deps_bundle(deps):utf8,
         >>)
-        [#(contents_path, contents_page), deps, ..lesson_pages]
-        |> t.done()
+        let assert Ok(LessonData(path: path, ..)) = list.first(lessons)
+        let entry = #(tour_name, description, path)
+        let pages = [#(contents_path, contents_page), deps, ..lesson_pages]
+        t.done(#(entry, pages))
       }),
     ),
   )
+  let #(tours, lessons) = list.unzip(lessons)
   let lessons = list.flatten(lessons)
-  let tours = [
-    #(
-      "Lustre tutorial",
-      "Get started building your first web app with the Lusture tutorial.",
-      "/lustre-tutorial/introduction/welcome-to-lustre",
-    ),
-    // #(
+  // let tours = [
+  //   #(
+  //     "Lustre tutorial",
+  //     "Get started building your first web app with the Lusture tutorial.",
+  //     "/lustre-tutorial/introduction/welcome-to-lustre",
+  //   ),
+  // #(
   //   "Building a webserver",
   //   "Learn how to build a webserver.",
   //   "/building-a-webserver/introduction/hello-world",
@@ -285,7 +313,8 @@ fn build() {
   //   "Deploy a static webpage",
   //   "/deploy/introduction/deploying",
   // ),
-  ]
+  // ]
+  use share <- t.do(t.read("/gleamtours/share.png"))
   let fixed = [
     #("/_redirects", <<redirects:utf8>>),
     #("/index.html", index.view(tours)),
@@ -293,6 +322,7 @@ fn build() {
     #("/proxy.js", <<proxy_js:utf8>>),
     #("/auth/twitter/index.html", auth_page("twitter")),
     #("/auth/netlify/index.html", auth_page("netlify")),
+    #("/share.png", share),
   ]
   t.done(list.flatten([fixed, lessons, compiler_assets, static]))
 }
