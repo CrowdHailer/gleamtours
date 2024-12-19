@@ -26,7 +26,6 @@ pub fn render(
 ) {
   let content =
     html.doc(
-      tour,
       list.flatten([
         [
           html.stylesheet("/css/fonts.css"),

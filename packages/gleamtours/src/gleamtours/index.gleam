@@ -10,7 +10,6 @@ import mysig/preview
 pub fn view(tours) {
   let content =
     html.doc(
-      "Gleam tours",
       list.flatten([
         [
           html.stylesheet("/css/fonts.css"),
