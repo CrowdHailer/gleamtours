@@ -207,7 +207,7 @@ fn build() {
       "/gleamtours/tours/01_lustre_tutorial",
       "Lustre tutorial",
       "lustre-tutorial",
-      "Get started building your first web app with the Lusture tutorial.",
+      "Get started building your first web app with the Lustre tutorial.",
     ),
   ]
   use lessons <- t.do(
@@ -300,7 +300,7 @@ fn build() {
   // let tours = [
   //   #(
   //     "Lustre tutorial",
-  //     "Get started building your first web app with the Lusture tutorial.",
+  //     "Get started building your first web app with the Lustre tutorial.",
   //     "/lustre-tutorial/introduction/welcome-to-lustre",
   //   ),
   // #(
