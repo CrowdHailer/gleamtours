@@ -25,12 +25,14 @@ pub fn main() {
   do_main(list.drop(array.to_list(process.argv()), 2))
 }
 
+const root = "../.."
+
 pub fn do_main(args) {
   case args {
     [] ->
       promise.map(
         // At level where language tour is relative
-        node.watch(develop(args), "../../..", fn(result) {
+        node.watch(develop(args), root, fn(result) {
           case result {
             Ok(Nil) -> Nil
             Error(reason) -> io.println(snag.pretty_print(reason))
@@ -39,7 +41,7 @@ pub fn do_main(args) {
         fn(_) { 0 },
       )
     ["build"] -> {
-      use result <- promise.map(node.run(build(), "../../.."))
+      use result <- promise.map(node.run(build(), root))
       case result {
         Ok(_) -> "GOOD"
         Error(reason) -> snag.pretty_print(reason)
@@ -48,7 +50,7 @@ pub fn do_main(args) {
       0
     }
     ["deploy"] -> {
-      use result <- promise.map(node.run(deploy(), "../../.."))
+      use result <- promise.map(node.run(deploy(), root))
       case result {
         Ok(_) -> "GOOD"
         Error(reason) -> snag.pretty_print(reason)
@@ -57,7 +59,7 @@ pub fn do_main(args) {
       0
     }
     ["social"] -> {
-      use result <- promise.map(node.run(social.serve(), "../../.."))
+      use result <- promise.map(node.run(social.serve(), root))
       case result {
         Ok(_) -> "GOOD"
         Error(reason) -> snag.pretty_print(reason)
@@ -200,11 +202,11 @@ fn build() {
   use compiler_assets <- t.do(read_compiler_assets())
   use proxy_js <- t.do(t.bundle("gleamtours/sandbox/proxy", "run"))
 
-  // let path = "/gleamtours/tours"
+  // let path = "/tours"
   // use tours <- t.do(load_prefix(path, ""))
   let tours = [
     #(
-      "/gleamtours/tours/01_lustre_tutorial",
+      "/tours/01_lustre_tutorial",
       "Lustre tutorial",
       "lustre-tutorial",
       "Get started building your first web app with the Lustre tutorial.",
@@ -314,7 +316,7 @@ fn build() {
   //   "/deploy/introduction/deploying",
   // ),
   // ]
-  use share <- t.do(t.read("/gleamtours/share.png"))
+  use share <- t.do(t.read("/share.png"))
   let fixed = [
     #("/_redirects", <<redirects:utf8>>),
     #("/index.html", index.view(tours)),
@@ -333,7 +335,7 @@ fn load_tour_styles() {
     "/css/root.css", "/css/pages/everything.css", "/css/pages/lesson.css",
     "/css/code/syntax-highlight.css", "/css/code/color-schemes/atom-one.css",
   ]
-  let tour_static_dir = "/language-tour/static"
+  let tour_static_dir = "/static"
   // needs to be a t.try_promise_map for proper use of t inside
 
   t.sequential(
@@ -345,7 +347,7 @@ fn load_tour_styles() {
 }
 
 fn read_compiler_assets() {
-  let dir = "/ctrl/priv/vendor/wasm-compiler"
+  let dir = "/wasm-compiler"
   // This is causing rollup to be unhappy
   // could read zipped??
   // use assets <- t.do(t.list(dir))
