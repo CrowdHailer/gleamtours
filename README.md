@@ -4,8 +4,15 @@ Tours through various topics in Gleam available on https://gleamtours.com/
 
 ## Running
 
-Need to download wasm-compiler to `priv/vendor`.
+Need to download wasm-compiler to `priv/vendor`. - I have vendored this in at the version I was using. However I still get compiler errors in the browser.
 Need to build each tour package before serving.
+
+All commands for running the service are run from the `packages/gleamtours` directory
+
+prerequisits
+```
+npm i
+```
 
 To start run
 ```
